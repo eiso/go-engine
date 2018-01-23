@@ -1,17 +1,21 @@
 package repositories
 
 import (
+	"fmt"
+
 	"github.com/chrislusf/gleam/util"
 	git "gopkg.in/src-d/go-git.v4"
 )
 
 type RepositoriesGitReader struct {
 	repo *git.Repository
+	read bool
 }
 
 func New(r *git.Repository) *RepositoriesGitReader {
 	return &RepositoriesGitReader{
 		repo: r,
+		read: false,
 	}
 }
 
@@ -30,10 +34,16 @@ root
 
 func (r *RepositoriesGitReader) Read() (row *util.Row, err error) {
 
+	if r.read {
+		return nil, fmt.Errorf("repository already read")
+	}
+
 	// ... retrieving the branch being pointed by HEAD
 	ref, err := r.repo.Head()
 	if err != nil {
 		return nil, err
+	} else {
+		r.read = true
 	}
 
 	return util.NewRow(util.Now(), ref.String()), nil

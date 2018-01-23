@@ -19,22 +19,9 @@ func main() {
 	flag.Parse() // optional, since gio.Init() will call this also.
 	gio.Init()   // If the command line invokes the mapper or reducer, execute it and exit.
 
-	/*
-		f := flow.New("top5 words in passwd").
-			Read(git.Repositories("/home/mthek/engine/*", 1)).
-			Map("tokenize", mapper.Tokenize). // invoke the registered "tokenize" mapper function.
-			Pipe("debugWithPipe", "tee debug.txt").
-			Map("addOne", mapper.AppendOne).      // invoke the registered "addOne" mapper function.
-			ReduceByKey("sum", reducer.SumInt64). // invoke the registered "sum" reducer function.
-			Sort("sortBySum", flow.OrderBy(2, true)).
-			Top("top5", 5, flow.OrderBy(2, false)).
-			Printlnf("%s\t%d")
-	*/
-
-	f := flow.New("top5 words in passwd").
-		Read(git.References("/home/mthek/engine/**", 1)).
-		//Map("tokenize", mapper.Tokenize). // invoke the registered "tokenize" mapper function.
-		//Pipe("debugWithPipe", "tee debug.txt").
+	f := flow.New("Git pipeline").
+		//	Read(git.References("/home/mthek/engine/**", 1)).
+		Read(git.Repositories("/home/mthek/engine/**", 1)).
 		Printlnf("%s")
 
 	if *isDistributed {

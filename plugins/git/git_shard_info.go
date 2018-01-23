@@ -49,22 +49,12 @@ func (ds *GitShardInfo) ReadSplit() error {
 		reader.ReadHeader()
 	}
 
-	switch ds.GitDataType {
-
-	case "repositories":
+	for {
 		row, err := reader.Read()
 		if err != nil {
 			break
 		}
 		row.WriteTo(os.Stdout)
-	case "references":
-		for {
-			row, err := reader.Read()
-			if err != nil {
-				break
-			}
-			row.WriteTo(os.Stdout)
-		}
 	}
 
 	return err
