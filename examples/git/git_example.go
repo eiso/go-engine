@@ -21,23 +21,24 @@ func main() {
 	flag.Parse() // optional, since gio.Init() will call this also.
 	gio.Init()   // If the command line invokes the mapper or reducer, execute it and exit.
 
-	/*f := flow.New("Git pipeline").
-	Read(git.Repositories("/home/mthek/engine/**", 1)).
-	Printlnf("%s")
-	*/
-	f := flow.New("Git pipeline").
-		Read(git.References("/home/mthek/engine/**", 1)).
-		Pipe("grep", "grep remote").
+	f := flow.New("Git pipeline")
+
+	repos := f.Read(git.Repositories("/home/mthek/engine/**", 1))
+
+	refs := f.Read(git.References("/home/mthek/engine/**", 1)).
+		Pipe("grep", "grep remote")
+
+	join := repos.Join("Repository Data", refs, flow.OrderBy(1, true)).
 		OutputRow(func(row *util.Row) error {
-			fmt.Printf("%s : %s : %s\n ", gio.ToString(row.K[0]), gio.ToString(row.V[0]), gio.ToString(row.V[1]))
+			fmt.Printf("%s : %s : %s : %s\n ", gio.ToString(row.K[0]), row.V[0], gio.ToString(row.V[1]), gio.ToString(row.V[2]))
 			return nil
 		})
 
 	if *isDistributed {
-		f.Run(distributed.Option())
+		join.Run(distributed.Option())
 	} else if *isDockerCluster {
-		f.Run(distributed.Option().SetMaster("master:45326"))
+		join.Run(distributed.Option().SetMaster("master:45326"))
 	} else {
-		f.Run()
+		join.Run()
 	}
 }

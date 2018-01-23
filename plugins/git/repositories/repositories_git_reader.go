@@ -47,7 +47,7 @@ func (r *RepositoriesGitReader) Read() (row *util.Row, err error) {
 	}
 
 	urls := remotes[0].Config().URLs
-	id := strings.TrimPrefix(urls[0], "https://")
+	repositoryID := strings.TrimPrefix(urls[0], "https://")
 
-	return util.NewRow(util.Now(), id, urls), nil
+	return util.NewRow(util.Now(), repositoryID, urls), nil
 }

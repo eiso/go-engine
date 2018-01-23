@@ -9,8 +9,8 @@ import (
 )
 
 type ReferencesGitReader struct {
-	repository_id string
-	refs          storer.ReferenceIter
+	repositoryID string
+	refs         storer.ReferenceIter
 }
 
 func New(r *git.Repository) *ReferencesGitReader {
@@ -19,11 +19,11 @@ func New(r *git.Repository) *ReferencesGitReader {
 	remotes, _ := r.Remotes()
 
 	urls := remotes[0].Config().URLs
-	repository_id := strings.TrimPrefix(urls[0], "https://")
+	repositoryID := strings.TrimPrefix(urls[0], "https://")
 
 	return &ReferencesGitReader{
-		repository_id: repository_id,
-		refs:          refs,
+		repositoryID: repositoryID,
+		refs:         refs,
 	}
 }
 
@@ -46,5 +46,5 @@ func (r *ReferencesGitReader) Read() (row *util.Row, err error) {
 		return nil, err
 	}
 
-	return util.NewRow(util.Now(), r.repository_id, ref.Hash().String(), ref.Name().String()), nil
+	return util.NewRow(util.Now(), r.repositoryID, ref.Hash().String(), ref.Name().String()), nil
 }
