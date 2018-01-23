@@ -3,6 +3,7 @@ package git
 import (
 	"fmt"
 
+	"github.com/chrislusf/gleam/plugins/git/blobs"
 	"github.com/chrislusf/gleam/plugins/git/references"
 	"github.com/chrislusf/gleam/plugins/git/repositories"
 	"github.com/chrislusf/gleam/util"
@@ -27,11 +28,10 @@ func Commits(fileOrPattern string, partitionCount int) *GitSource {
 }
 func TreeEntries(fileOrPattern string, partitionCount int) *GitSource {
 	return newGitSource("treeEntries", fileOrPattern, partitionCount)
-}
+}*/
 func Blobs(fileOrPattern string, partitionCount int) *GitSource {
 	return newGitSource("blobs", fileOrPattern, partitionCount)
 }
-*/
 
 func (ds *GitShardInfo) NewReader(r *git.Repository) (GitReader, error) {
 	switch ds.GitDataType {
@@ -39,12 +39,12 @@ func (ds *GitShardInfo) NewReader(r *git.Repository) (GitReader, error) {
 		return repositories.New(r), nil
 	case "references":
 		return references.New(r), nil
-		/*case "commits":
-			return commits.New(vf), nil
-		case "treeEntries":
-			return treeEntries.New(vf), nil
-		case "blobs":
-			return blobs.New(vf), nil	*/
+	/*case "commits":
+		return commits.New(r), nil
+	case "treeEntries":
+		return treeEntries.New(r), nil*/
+	case "blobs":
+		return blobs.New(r), nil
 	}
 	return nil, fmt.Errorf("Git data source '%s' is not defined.", ds.GitDataType)
 }

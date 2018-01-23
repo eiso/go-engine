@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/chrislusf/gleam/util"
 	git "gopkg.in/src-d/go-git.v4"
@@ -38,13 +39,15 @@ func (r *RepositoriesGitReader) Read() (row *util.Row, err error) {
 		return nil, fmt.Errorf("repository already read")
 	}
 
-	// ... retrieving the branch being pointed by HEAD
-	ref, err := r.repo.Head()
+	remotes, err := r.repo.Remotes()
 	if err != nil {
 		return nil, err
 	} else {
 		r.read = true
 	}
 
-	return util.NewRow(util.Now(), ref.String()), nil
+	urls := remotes[0].Config().URLs
+	id := strings.TrimPrefix(urls[0], "https://")
+
+	return util.NewRow(util.Now(), id, urls), nil
 }
