@@ -36,7 +36,7 @@ func Blobs(fileOrPattern string, partitionCount int) *GitSource {
 func (ds *GitShardInfo) NewReader(r *git.Repository) (GitReader, error) {
 	switch ds.GitDataType {
 	case "repositories":
-		return repositories.New(r), nil
+		return repositories.New(ds.RepoPath, r), nil
 	case "references":
 		return references.New(r), nil
 	/*case "commits":

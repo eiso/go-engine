@@ -9,12 +9,14 @@ import (
 )
 
 type RepositoriesGitReader struct {
+	path string
 	repo *git.Repository
 	read bool
 }
 
-func New(r *git.Repository) *RepositoriesGitReader {
+func New(path string, r *git.Repository) *RepositoriesGitReader {
 	return &RepositoriesGitReader{
+		path: path,
 		repo: r,
 		read: false,
 	}
@@ -49,5 +51,5 @@ func (r *RepositoriesGitReader) Read() (row *util.Row, err error) {
 	urls := remotes[0].Config().URLs
 	repositoryID := strings.TrimPrefix(urls[0], "https://")
 
-	return util.NewRow(util.Now(), repositoryID, urls), nil
+	return util.NewRow(util.Now(), repositoryID, r.path, urls), nil
 }

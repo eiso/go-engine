@@ -1,7 +1,6 @@
 package blobs
 
 import (
-	"io/ioutil"
 	"strings"
 
 	"github.com/chrislusf/gleam/util"
@@ -50,12 +49,5 @@ func (r *BlobsGitReader) Read() (row *util.Row, err error) {
 		return nil, err
 	}
 
-	reader, err := blob.Reader()
-	if err != nil {
-		return nil, err
-	}
-
-	contents, err := ioutil.ReadAll(reader)
-
-	return util.NewRow(util.Now(), r.repositoryID, blob.Hash.String(), contents), nil
+	return util.NewRow(util.Now(), r.repositoryID, blob.Hash.String()), nil
 }
