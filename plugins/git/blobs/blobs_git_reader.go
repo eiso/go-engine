@@ -1,20 +1,30 @@
 package blobs
 
 import (
+	"io/ioutil"
+	"strings"
+
 	"github.com/chrislusf/gleam/util"
 	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
 type BlobsGitReader struct {
-	//blobs someblobTypefromGoGit
+	repositoryID string
+	blobs        *object.BlobIter
 }
 
 func New(r *git.Repository) *BlobsGitReader {
 
-	//blobs, _ := ...
+	remotes, _ := r.Remotes()
+	blobs, _ := r.BlobObjects()
+
+	urls := remotes[0].Config().URLs
+	repositoryID := strings.TrimPrefix(urls[0], "https://")
 
 	return &BlobsGitReader{
-	//blobs: blobs,
+		repositoryID: repositoryID,
+		blobs:        blobs,
 	}
 }
 
@@ -35,5 +45,17 @@ root
 
 func (r *BlobsGitReader) Read() (row *util.Row, err error) {
 
-	return nil, err
+	blob, err := r.blobs.Next()
+	if err != nil {
+		return nil, err
+	}
+
+	reader, err := blob.Reader()
+	if err != nil {
+		return nil, err
+	}
+
+	contents, err := ioutil.ReadAll(reader)
+
+	return util.NewRow(util.Now(), r.repositoryID, blob.Hash.String(), contents), nil
 }

@@ -69,8 +69,6 @@ func newGitSource(gitDataType, fileOrPattern string, partitionCount int) *GitSou
 		s.hasWildcard = true
 	}
 
-	// fmt.Printf("file source: %+v\n", s)
-
 	return s
 }
 

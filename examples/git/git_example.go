@@ -23,14 +23,32 @@ func main() {
 
 	f := flow.New("Git pipeline")
 
-	repos := f.Read(git.Repositories("/home/mthek/engine/**", 1))
+	path := "/home/mthek/engine/**"
 
-	refs := f.Read(git.References("/home/mthek/engine/**", 1)).
-		Pipe("grep", "grep remote")
+	repos := f.Read(git.Repositories(path, 1))
 
-	join := repos.Join("Repository Data", refs, flow.OrderBy(1, true)).
+	refs := f.Read(git.References(path, 1)).
+		Pipe("grep", "grep refs")
+
+	blobs := f.Read(git.Blobs(path, 1))
+
+	join1 := repos.JoinByKey("Repos & Refs", refs)
+
+	join := join1.JoinByKey("Repos & Refs & Blobs", blobs).
 		OutputRow(func(row *util.Row) error {
-			fmt.Printf("%s : %s : %s : %s\n ", gio.ToString(row.K[0]), row.V[0], gio.ToString(row.V[1]), gio.ToString(row.V[2]))
+			repositoryID := gio.ToString(row.K[0])
+			repositoryURLs := row.V[0]
+			refHash := gio.ToString(row.V[1])
+			refName := gio.ToString(row.V[2])
+			blobHash := gio.ToString(row.V[3])
+			blobContent := truncateString(gio.ToString(row.V[4]), 20)
+			fmt.Printf("%s : %s : %s : %s : %s : %s\n",
+				repositoryID,
+				repositoryURLs,
+				refHash,
+				refName,
+				blobHash,
+				blobContent)
 			return nil
 		})
 
@@ -41,4 +59,15 @@ func main() {
 	} else {
 		join.Run()
 	}
+}
+
+func truncateString(str string, num int) string {
+	b := str
+	if len(str) > num {
+		if num > 3 {
+			num -= 3
+		}
+		b = str[0:num] + "..."
+	}
+	return b
 }
