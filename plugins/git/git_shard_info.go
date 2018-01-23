@@ -13,7 +13,6 @@ import (
 
 type GitShardInfo struct {
 	Config      map[string]string
-	FileName    string
 	RepoPath    string
 	GitDataType string
 	HasHeader   bool
@@ -44,17 +43,29 @@ func (ds *GitShardInfo) ReadSplit() error {
 
 	reader, err := ds.NewReader(r)
 	if err != nil {
-		return fmt.Errorf("Failed to read file %s: %v", ds.FileName, err)
+		return fmt.Errorf("Failed to read repository %s: %v", ds.RepoPath, err)
 	}
 	if ds.HasHeader {
 		reader.ReadHeader()
 	}
 
-	row, err := reader.Read()
-	if err != nil {
-		return err
+	switch ds.GitDataType {
+
+	case "repositories":
+		row, err := reader.Read()
+		if err != nil {
+			break
+		}
+		row.WriteTo(os.Stdout)
+	case "references":
+		for {
+			row, err := reader.Read()
+			if err != nil {
+				break
+			}
+			row.WriteTo(os.Stdout)
+		}
 	}
-	row.WriteTo(os.Stdout)
 
 	return err
 }

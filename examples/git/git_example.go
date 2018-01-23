@@ -32,7 +32,7 @@ func main() {
 	*/
 
 	f := flow.New("top5 words in passwd").
-		Read(git.Repositories("/home/mthek/engine/*", 1)).
+		Read(git.References("/home/mthek/engine/**", 1)).
 		//Map("tokenize", mapper.Tokenize). // invoke the registered "tokenize" mapper function.
 		//Pipe("debugWithPipe", "tee debug.txt").
 		Printlnf("%s")

@@ -46,8 +46,7 @@ func (q *GitSource) Select(fields ...string) *GitSource {
 	return q
 }
 
-// New creates a GitSource based on a file name.
-// The base file name can have "*", "?" pattern denoting a list of file names.
+// New creates a GitSource based on a path.
 func newGitSource(gitDataType, fileOrPattern string, partitionCount int) *GitSource {
 
 	s := &GitSource{
@@ -59,14 +58,14 @@ func newGitSource(gitDataType, fileOrPattern string, partitionCount int) *GitSou
 	var err error
 	fileOrPattern, err = filepath.Abs(fileOrPattern)
 	if err != nil {
-		log.Fatalf("file \"%s\" not found: %v", fileOrPattern, err)
+		log.Fatalf("path \"%s\" not found: %v", fileOrPattern, err)
 	}
 
 	s.folder = filepath.Dir(fileOrPattern)
 	s.fileBaseName = filepath.Base(fileOrPattern)
 	s.Path = fileOrPattern
 
-	if strings.ContainsAny(s.fileBaseName, "*?") {
+	if strings.Contains(s.fileBaseName, "**") {
 		s.hasWildcard = true
 	}
 
@@ -75,16 +74,12 @@ func newGitSource(gitDataType, fileOrPattern string, partitionCount int) *GitSou
 	return s
 }
 
-// TODO
-// Recursively detect Git repos in a folder
 func (s *GitSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 	return f.Source(s.prefix+"."+s.fileBaseName, func(writer io.Writer, stats *pb.InstructionStat) error {
 		stats.InputCounter++
 		if !s.hasWildcard && filesystem.IsDir(s.Path) && filesystem.IsDir(filepath.Join(s.Path, "/.git/")) {
 			stats.OutputCounter++
 			util.NewRow(util.Now(), encodeShardInfo(&GitShardInfo{
-				// TODO Remove FileName
-				FileName:    s.Path,
 				RepoPath:    s.Path,
 				GitDataType: s.GitDataType,
 				HasHeader:   s.HasHeader,
@@ -114,14 +109,12 @@ func (s *GitSource) gitRepos(folder string, v []*filesystem.FileLocation, writer
 			if filesystem.IsDir(filepath.Join(vf.Location, "/.git/")) {
 				stats.OutputCounter++
 				util.NewRow(util.Now(), encodeShardInfo(&GitShardInfo{
-					// TODO Remove FileName
-					FileName:    vf.Location,
 					RepoPath:    vf.Location,
 					GitDataType: s.GitDataType,
 					HasHeader:   s.HasHeader,
 					Fields:      s.Fields,
 				})).WriteTo(writer)
-				log.Printf("vf.Location: %s", vf.Location)
+
 				continue
 			} else {
 				v = append(v, vf)
@@ -131,10 +124,4 @@ func (s *GitSource) gitRepos(folder string, v []*filesystem.FileLocation, writer
 	}
 
 	return v, nil
-}
-
-func (s *GitSource) match(fullPath string) bool {
-	baseName := filepath.Base(fullPath)
-	match, _ := filepath.Match(s.fileBaseName, baseName)
-	return match
 }
