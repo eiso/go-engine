@@ -1,29 +1,45 @@
 package repositories
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/chrislusf/gleam/util"
 	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 )
 
 type RepositoriesGitReader struct {
-	path string
-	repo *git.Repository
-	read bool
+	repo         *git.Repository
+	path         string
+	repositoryID string
+	urls         []string
+	refs         storer.ReferenceIter
 }
 
 func New(path string, r *git.Repository) *RepositoriesGitReader {
+
+	refs, _ := r.References()
+	remotes, _ := r.Remotes()
+
+	urls := remotes[0].Config().URLs
+	repositoryID := strings.TrimPrefix(urls[0], "https://")
+
 	return &RepositoriesGitReader{
-		path: path,
-		repo: r,
-		read: false,
+		repo:         r,
+		path:         path,
+		repositoryID: repositoryID,
+		urls:         urls,
+		refs:         refs,
 	}
 }
 
 func (r *RepositoriesGitReader) ReadHeader() (fieldNames []string, err error) {
-	return nil, nil
+	fieldNames = []string{
+		"repositoryID",
+		"repositoryPath",
+		"repositoryURLs",
+	}
+	return fieldNames, nil
 }
 
 /*
@@ -37,19 +53,12 @@ root
 
 func (r *RepositoriesGitReader) Read() (row *util.Row, err error) {
 
-	if r.read {
-		return nil, fmt.Errorf("repository already read")
-	}
-
-	remotes, err := r.repo.Remotes()
+	ref, err := r.refs.Next()
 	if err != nil {
 		return nil, err
-	} else {
-		r.read = true
 	}
 
-	urls := remotes[0].Config().URLs
-	repositoryID := strings.TrimPrefix(urls[0], "https://")
+	key := util.Hash([]byte(ref.Hash().String() + r.repositoryID))
 
-	return util.NewRow(util.Now(), repositoryID, r.path, urls), nil
+	return util.NewRow(util.Now(), key, r.repositoryID, r.path, r.urls), nil
 }

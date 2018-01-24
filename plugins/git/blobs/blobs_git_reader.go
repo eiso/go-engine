@@ -28,7 +28,11 @@ func New(r *git.Repository) *BlobsGitReader {
 }
 
 func (r *BlobsGitReader) ReadHeader() (fieldNames []string, err error) {
-	return nil, nil
+	fieldNames = []string{
+		"repositoryID",
+		"blobHash",
+	}
+	return fieldNames, nil
 }
 
 /*

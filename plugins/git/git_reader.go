@@ -4,8 +4,10 @@ import (
 	"fmt"
 
 	"github.com/chrislusf/gleam/plugins/git/blobs"
+	"github.com/chrislusf/gleam/plugins/git/commits"
 	"github.com/chrislusf/gleam/plugins/git/references"
 	"github.com/chrislusf/gleam/plugins/git/repositories"
+	"github.com/chrislusf/gleam/plugins/git/trees"
 	"github.com/chrislusf/gleam/util"
 	git "gopkg.in/src-d/go-git.v4"
 )
@@ -21,14 +23,12 @@ func Repositories(fileOrPattern string, partitionCount int) *GitSource {
 func References(fileOrPattern string, partitionCount int) *GitSource {
 	return newGitSource("references", fileOrPattern, partitionCount)
 }
-
-/*
 func Commits(fileOrPattern string, partitionCount int) *GitSource {
 	return newGitSource("commits", fileOrPattern, partitionCount)
 }
-func TreeEntries(fileOrPattern string, partitionCount int) *GitSource {
-	return newGitSource("treeEntries", fileOrPattern, partitionCount)
-}*/
+func Trees(fileOrPattern string, partitionCount int) *GitSource {
+	return newGitSource("trees", fileOrPattern, partitionCount)
+}
 func Blobs(fileOrPattern string, partitionCount int) *GitSource {
 	return newGitSource("blobs", fileOrPattern, partitionCount)
 }
@@ -39,10 +39,10 @@ func (ds *GitShardInfo) NewReader(r *git.Repository) (GitReader, error) {
 		return repositories.New(ds.RepoPath, r), nil
 	case "references":
 		return references.New(r), nil
-	/*case "commits":
+	case "commits":
 		return commits.New(r), nil
-	case "treeEntries":
-		return treeEntries.New(r), nil*/
+	case "trees":
+		return trees.New(r), nil
 	case "blobs":
 		return blobs.New(r), nil
 	}

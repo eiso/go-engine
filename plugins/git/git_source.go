@@ -33,12 +33,6 @@ func (s *GitSource) Generate(f *flow.Flow) *flow.Dataset {
 	return s.genShardInfos(f).RoundRobin(s.prefix, s.PartitionCount).Map(s.prefix+".Read", registeredMapperReadShard)
 }
 
-// SetHasHeader sets whether the data contains header
-func (q *GitSource) SetHasHeader(hasHeader bool) *GitSource {
-	q.HasHeader = hasHeader
-	return q
-}
-
 // TODO adjust GitSource api to denote which data source can support columnar reads
 // Select selects fields that can be pushed down to data sources supporting columnar reads
 func (q *GitSource) Select(fields ...string) *GitSource {
@@ -53,6 +47,7 @@ func newGitSource(gitDataType, fileOrPattern string, partitionCount int) *GitSou
 		PartitionCount: partitionCount,
 		GitDataType:    gitDataType,
 		prefix:         gitDataType,
+		HasHeader:      true,
 	}
 
 	var err error
