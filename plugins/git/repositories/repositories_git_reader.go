@@ -53,12 +53,5 @@ root
 
 func (r *RepositoriesGitReader) Read() (row *util.Row, err error) {
 
-	ref, err := r.refs.Next()
-	if err != nil {
-		return nil, err
-	}
-
-	key := util.Hash([]byte(ref.Hash().String() + r.repositoryID))
-
-	return util.NewRow(util.Now(), key, r.repositoryID, r.path, r.urls), nil
+	return util.NewRow(util.Now(), r.repositoryID, r.path, r.urls), nil
 }

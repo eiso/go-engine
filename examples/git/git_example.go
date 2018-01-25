@@ -8,6 +8,7 @@ import (
 	"github.com/chrislusf/gleam/distributed"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/gio"
+	"github.com/chrislusf/gleam/plugins/git"
 	"github.com/chrislusf/gleam/util"
 
 	"gopkg.in/bblfsh/client-go.v2"
@@ -25,9 +26,12 @@ var (
 	registeredCommitsKeyForRefs  = gio.RegisterMapper(commits{}.keyForRefs)
 	registeredCommitsKeyForTrees = gio.RegisterMapper(commits{}.keyForTrees)
 	registeredTreesKeyForCommits = gio.RegisterMapper(trees{}.keyForCommits)
-	registeredUAST               = gio.RegisterMapper(uast)
-	registeredReadBlob           = gio.RegisterMapper(readBlob)
-	registeredClassifyLanguages  = gio.RegisterMapper(classifyLanguages)
+
+	registeredCommitsJoinRefsKeyForTrees = gio.RegisterMapper(commitsJoinRefs{}.keyForTrees)
+
+	registeredUAST              = gio.RegisterMapper(uast)
+	registeredReadBlob          = gio.RegisterMapper(readBlob)
+	registeredClassifyLanguages = gio.RegisterMapper(classifyLanguages)
 )
 
 func main() {
@@ -37,34 +41,38 @@ func main() {
 
 	f := flow.New("Git pipeline")
 
-	path := "/home/mthek/engine/keras"
+	path := "/home/mthek/engine-small/**"
 
-	//repos := f.Read(git.Repositories(path, 1))
+	//	repos := f.Read(git.Repositories(path, 1))
 
-	/*
-		refs := f.Read(git.References(path, 1)).
-			Map("RefsJoinCommits", registeredRefsKeyForCommits)
-		commits := f.Read(git.Commits(path, 1)).
-			Map("CommitsJoinRefs", registeredCommitsKeyForRefs)
+	refs := f.Read(git.References(path, 1)).
+		Map("RefsJoinCommits", registeredRefsKeyForCommits)
+	commits := f.Read(git.Commits(path, 1)).
+		Map("CommitsJoinRefs", registeredCommitsKeyForRefs)
 
-		join := commits.LeftOuterJoinByKey("Commits & Refs", refs)
+	commitsJoinRefs := commits.LeftOuterJoinByKey("Commits & Refs", refs).
+		Map("commitsJoinRefsJoinTrees", registeredCommitsJoinRefsKeyForTrees)
 
+	commits2 := f.Read(git.Commits(path, 1)).
+		Map("CommitsJoinRefs", registeredCommitsKeyForTrees)
+	trees := f.Read(git.Trees(path, 1)).
+		Map("CommitsJoinTrees", registeredTreesKeyForCommits)
 
-		commits := f.Read(git.Commits(path, 1)).
-			Map("CommitsJoinRefs", registeredCommitsKeyForTrees)
-		trees := f.Read(git.Commits(path, 1)).
-			Map("CommitsJoinTrees", registeredTreesKeyForCommits)
+	treesJoinCommits := trees.LeftOuterJoinByKey("Trees & Commits", commits2)
 
-		join := trees.LeftOuterJoinByKey("Trees & Commits", commits)
-	*/
+	commitsJoinTreesJoinRefs := treesJoinCommits.JoinByKey("Refs & Commits & Trees", commitsJoinRefs)
 
 	//blobs := f.Read(git.Blobs(path, 1))
 
-	q := join.OutputRow(func(row *util.Row) error {
-		fmt.Printf("\n %s : %s : %s\n",
+	q := commitsJoinTreesJoinRefs.OutputRow(func(row *util.Row) error {
+		fmt.Printf("\n %s : %s : %s : %s : %s : %s : %s\n",
 			gio.ToString(row.K[0]),
 			gio.ToString(row.V[0]),
-			gio.ToString(row.V[11]),
+			gio.ToString(row.V[1]),
+			gio.ToString(row.V[2]),
+			gio.ToString(row.V[3]),
+			gio.ToString(row.V[4]),
+		//	gio.ToString(row.V[5]),
 		)
 		return nil
 	})
@@ -84,14 +92,14 @@ func main() {
 type refs struct{}
 
 func (refs) keyForCommits(x []interface{}) error {
-	repositoryID := x[0]
+	//repositoryID := x[0]
 	refHash := x[1]
 	refName := x[2]
 
 	gio.Emit(
 		refHash,
 		refName,
-		repositoryID,
+		//		repositoryID,
 	)
 	return nil
 }
@@ -99,63 +107,63 @@ func (refs) keyForCommits(x []interface{}) error {
 type commits struct{}
 
 func (commits) keyForRefs(x []interface{}) error {
-	repositoryID := x[0]
+	//repositoryID := x[0]
 	commitHash := x[1]
 	treeHash := x[2]
-	parentHashes := x[3]
-	parentsCount := x[4]
-	message := x[5]
-	authorEmail := x[6]
-	authorName := x[7]
-	authorDate := x[8]
-	committerEmail := x[9]
-	committerName := x[10]
-	committerDate := x[11]
+	//	parentHashes := x[3]
+	//	parentsCount := x[4]
+	//	message := x[5]
+	//	authorEmail := x[6]
+	//	authorName := x[7]
+	//	authorDate := x[8]
+	//	committerEmail := x[9]
+	//	committerName := x[10]
+	//	committerDate := x[11]
 
 	gio.Emit(
 		commitHash,
 		treeHash,
-		parentHashes,
-		parentsCount,
-		message,
-		authorEmail,
-		authorName,
-		authorDate,
-		committerEmail,
-		committerName,
-		committerDate,
-		repositoryID,
+		//		parentHashes,
+		//		parentsCount,
+		//		message,
+		//		authorEmail,
+		//		authorName,
+		//		authorDate,
+		//		committerEmail,
+		//		committerName,
+		//		committerDate,
+		//      repositoryID,
 	)
 	return nil
 }
 
 func (commits) keyForTrees(x []interface{}) error {
-	repositoryID := x[0]
+	//	repositoryID := x[0]
 	commitHash := x[1]
 	treeHash := x[2]
-	parentHashes := x[3]
-	parentsCount := x[4]
-	message := x[5]
-	authorEmail := x[6]
-	authorName := x[7]
-	authorDate := x[8]
-	committerEmail := x[9]
-	committerName := x[10]
-	committerDate := x[11]
+	//	parentHashes := x[3]
+	//	parentsCount := x[4]
+	//	message := x[5]
+	//	authorEmail := x[6]
+	//	authorName := x[7]
+	//	authorDate := x[8]
+	//	committerEmail := x[9]
+	//	committerName := x[10]
+	//	committerDate := x[11]
 
 	gio.Emit(
 		treeHash,
 		commitHash,
-		parentHashes,
-		parentsCount,
-		message,
-		authorEmail,
-		authorName,
-		authorDate,
-		committerEmail,
-		committerName,
-		committerDate,
-		repositoryID,
+		//		parentHashes,
+		//		parentsCount,
+		//		message,
+		//		authorEmail,
+		//		authorName,
+		//		authorDate,
+		//		committerEmail,
+		//		committerName,
+		//		committerDate,
+		//		repositoryID,
 	)
 	return nil
 }
@@ -163,12 +171,46 @@ func (commits) keyForTrees(x []interface{}) error {
 type trees struct{}
 
 func (trees) keyForCommits(x []interface{}) error {
-	repositoryID := x[0]
+	//repositoryID := x[0]
 	treeHash := x[1]
+	fileName := x[2]
+	blobHash := x[3]
+	//	blobSize := x[4]
+	//	isBinary := x[5]
 
 	gio.Emit(
 		treeHash,
-		repositoryID,
+		fileName,
+		blobHash,
+		//	blobSize,
+		//	isBinary,
+		//  repositoryID,
+	)
+	return nil
+}
+
+//--------JOINS--------//
+
+type commitsJoinRefs struct{}
+
+func (commitsJoinRefs) keyForTrees(x []interface{}) error {
+	refHash := x[0]
+	refName := x[1]
+	treeHash := x[2]
+	//		parentHashes := x[3]
+	//		parentsCount := x[4]
+	//		message := x[5]
+	//		authorEmail := x[6]
+	//		authorName := x[7]
+	//		authorDate := x[8]
+	//		committerEmail := x[9]
+	//		committerName := x[10]
+	//		committerDate := x[11]
+
+	gio.Emit(
+		treeHash,
+		refHash,
+		refName,
 	)
 	return nil
 }

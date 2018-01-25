@@ -29,6 +29,7 @@ func New(r *git.Repository) *ReferencesGitReader {
 
 func (r *ReferencesGitReader) ReadHeader() (fieldNames []string, err error) {
 	fieldNames = []string{
+		"repositoryID",
 		"refHash",
 		"refName",
 	}
@@ -50,7 +51,5 @@ func (r *ReferencesGitReader) Read() (row *util.Row, err error) {
 		return nil, err
 	}
 
-	key := util.Hash([]byte(ref.Hash().String() + r.repositoryID))
-
-	return util.NewRow(util.Now(), key, ref.Hash().String(), ref.Name().String()), nil
+	return util.NewRow(util.Now(), r.repositoryID, ref.Hash().String(), ref.Name().String()), nil
 }

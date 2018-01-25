@@ -31,6 +31,7 @@ func (r *BlobsGitReader) ReadHeader() (fieldNames []string, err error) {
 	fieldNames = []string{
 		"repositoryID",
 		"blobHash",
+		"blobSize",
 	}
 	return fieldNames, nil
 }
@@ -53,5 +54,5 @@ func (r *BlobsGitReader) Read() (row *util.Row, err error) {
 		return nil, err
 	}
 
-	return util.NewRow(util.Now(), r.repositoryID, blob.Hash.String()), nil
+	return util.NewRow(util.Now(), r.repositoryID, blob.Hash.String(), blob.Size), nil
 }

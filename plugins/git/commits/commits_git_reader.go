@@ -90,12 +90,9 @@ func (r *CommitsGitReader) Read() (row *util.Row, err error) {
 	committerName := commit.Committer.Name
 	committerDate := commit.Committer.When.Unix()
 
-	key := util.Hash([]byte(commitHash + r.repositoryID))
-
 	return util.NewRow(util.Now(),
-		key,
-		commitHash,
 		r.repositoryID,
+		commitHash,
 		treeHash,
 		parentHashes,
 		parentsCount,

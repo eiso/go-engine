@@ -1,6 +1,8 @@
 package trees
 
 import (
+	"errors"
+	"strconv"
 	"strings"
 
 	"github.com/chrislusf/gleam/util"
@@ -11,6 +13,14 @@ import (
 type TreesGitReader struct {
 	repositoryID string
 	trees        *object.TreeIter
+	files        map[string]fileObject
+}
+
+type fileObject struct {
+	treeHash string
+	isBinary bool
+	blobHash string
+	blobSize int64
 }
 
 func New(r *git.Repository) *TreesGitReader {
@@ -21,14 +31,43 @@ func New(r *git.Repository) *TreesGitReader {
 	urls := remotes[0].Config().URLs
 	repositoryID := strings.TrimPrefix(urls[0], "https://")
 
+	m := make(map[string]fileObject)
+
+	// TODO missing folder entries, only files right now
+
+	tree.ForEach(func(t *object.Tree) error {
+		t.Files().ForEach(func(file *object.File) error {
+			b, _ := file.IsBinary()
+
+			m[file.Name] = fileObject{
+				treeHash: t.Hash.String(),
+				isBinary: b,
+				blobHash: file.Blob.Hash.String(),
+				blobSize: file.Blob.Size,
+			}
+			return nil
+		})
+		return nil
+	})
+
 	return &TreesGitReader{
 		repositoryID: repositoryID,
 		trees:        tree,
+		files:        m,
 	}
 }
 
 func (r *TreesGitReader) ReadHeader() (fieldNames []string, err error) {
-	return nil, nil
+	fieldNames = []string{
+		"repositoryID",
+		"treeHash",
+		"fileName",
+		"blobHash",
+		"blobSize",
+		"isBinary",
+	}
+
+	return fieldNames, nil
 }
 
 /*
@@ -41,17 +80,18 @@ root
 */
 
 func (r *TreesGitReader) Read() (row *util.Row, err error) {
+	for k, v := range r.files {
+		defer delete(r.files, k)
 
-	tree, err := r.trees.Next()
-	if err != nil {
-		return nil, err
+		return util.NewRow(util.Now(),
+			r.repositoryID,
+			v.treeHash,
+			k,
+			v.blobHash,
+			v.blobSize,
+			//TODO add ToBool to utils
+			strconv.FormatBool(v.isBinary),
+		), nil
 	}
-	/*
-		tree.Files().ForEach(func(file *object.File) error {
-			log.Printf("Hash: %s \t Entries: %s \t Filename: %s", tree.Hash.String(), tree.Entries, file.Name)
-			//row.WriteTo(os.Stdout)
-			return nil
-		})
-	*/
-	return util.NewRow(util.Now(), r.repositoryID, tree.Hash.String()), nil
+	return nil, errors.New("end of files list")
 }
