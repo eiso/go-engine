@@ -12,48 +12,21 @@ import (
 
 type TreesGitReader struct {
 	repositoryID string
-	trees        *object.TreeIter
-	files        map[string]fileObject
-}
-
-type fileObject struct {
-	treeHash string
-	isBinary bool
-	blobHash string
-	blobSize int64
+	treeIter     *object.TreeIter
+	fileIter     *object.FileIter
+	lastTreeHash string
 }
 
 func New(r *git.Repository) *TreesGitReader {
-
 	remotes, _ := r.Remotes()
-	tree, _ := r.TreeObjects()
+	treeIter, _ := r.TreeObjects()
 
 	urls := remotes[0].Config().URLs
 	repositoryID := strings.TrimPrefix(urls[0], "https://")
 
-	m := make(map[string]fileObject)
-
-	// TODO missing folder entries, only files right now
-
-	tree.ForEach(func(t *object.Tree) error {
-		t.Files().ForEach(func(file *object.File) error {
-			b, _ := file.IsBinary()
-
-			m[file.Name] = fileObject{
-				treeHash: t.Hash.String(),
-				isBinary: b,
-				blobHash: file.Blob.Hash.String(),
-				blobSize: file.Blob.Size,
-			}
-			return nil
-		})
-		return nil
-	})
-
 	return &TreesGitReader{
 		repositoryID: repositoryID,
-		trees:        tree,
-		files:        m,
+		treeIter:     treeIter,
 	}
 }
 
@@ -80,18 +53,29 @@ root
 */
 
 func (r *TreesGitReader) Read() (row *util.Row, err error) {
-	for k, v := range r.files {
-		defer delete(r.files, k)
-
-		return util.NewRow(util.Now(),
-			r.repositoryID,
-			v.treeHash,
-			k,
-			v.blobHash,
-			v.blobSize,
-			//TODO add ToBool to utils
-			strconv.FormatBool(v.isBinary),
-		), nil
+	if r.fileIter == nil {
+		tree, err := r.treeIter.Next()
+		if err != nil {
+			return nil, errors.New("end of treeIter")
+		}
+		r.lastTreeHash = tree.Hash.String()
+		r.fileIter = tree.Files()
 	}
-	return nil, errors.New("end of files list")
+
+	file, err := r.fileIter.Next()
+	if err != nil {
+		r.fileIter = nil
+		return nil, nil
+	}
+
+	binary, _ := file.IsBinary()
+
+	return util.NewRow(util.Now(),
+		r.repositoryID,
+		file.Blob.Hash.String(),
+		file.Name,
+		r.lastTreeHash,
+		file.Blob.Size,
+		strconv.FormatBool(binary),
+	), nil
 }

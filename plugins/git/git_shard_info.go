@@ -54,6 +54,9 @@ func (ds *GitShardInfo) ReadSplit() error {
 		if err != nil {
 			break
 		}
+		if row == nil {
+			continue
+		}
 		row.WriteTo(os.Stdout)
 	}
 

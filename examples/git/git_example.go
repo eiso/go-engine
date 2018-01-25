@@ -42,7 +42,7 @@ func main() {
 
 	f := flow.New("Git pipeline")
 
-	path := "/home/mthek/engine-small/**"
+	path := "/home/mthek/engine/keras"
 
 	//	repos := f.Read(git.Repositories(path, 1))
 
