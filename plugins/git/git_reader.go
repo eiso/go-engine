@@ -33,18 +33,18 @@ func Blobs(fileOrPattern string, partitionCount int) *GitSource {
 	return newGitSource("blobs", fileOrPattern, partitionCount)
 }
 
-func (ds *GitShardInfo) NewReader(r *git.Repository) (GitReader, error) {
+func (ds *GitShardInfo) NewReader(r *git.Repository, path string) (GitReader, error) {
 	switch ds.GitDataType {
 	case "repositories":
-		return repositories.New(ds.RepoPath, r), nil
+		return repositories.New(r, path), nil
 	case "references":
-		return references.New(r), nil
+		return references.New(r, path), nil
 	case "commits":
-		return commits.New(r), nil
+		return commits.New(r, path), nil
 	case "trees":
-		return trees.New(r), nil
+		return trees.New(r, path), nil
 	case "blobs":
-		return blobs.New(r), nil
+		return blobs.New(r, path), nil
 	}
 	return nil, fmt.Errorf("Git data source '%s' is not defined.", ds.GitDataType)
 }

@@ -1,8 +1,6 @@
 package references
 
 import (
-	"strings"
-
 	"github.com/chrislusf/gleam/util"
 	git "gopkg.in/src-d/go-git.v4"
 	storer "gopkg.in/src-d/go-git.v4/plumbing/storer"
@@ -13,16 +11,11 @@ type ReferencesGitReader struct {
 	refs         storer.ReferenceIter
 }
 
-func New(r *git.Repository) *ReferencesGitReader {
+func New(r *git.Repository, path string) *ReferencesGitReader {
 
 	refs, _ := r.References()
-	remotes, _ := r.Remotes()
-
-	urls := remotes[0].Config().URLs
-	repositoryID := strings.TrimPrefix(urls[0], "https://")
-
 	return &ReferencesGitReader{
-		repositoryID: repositoryID,
+		repositoryID: path,
 		refs:         refs,
 	}
 }
@@ -32,6 +25,7 @@ func (r *ReferencesGitReader) ReadHeader() (fieldNames []string, err error) {
 		"repositoryID",
 		"refHash",
 		"refName",
+		"commitHash",
 	}
 	return fieldNames, nil
 }

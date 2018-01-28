@@ -1,8 +1,6 @@
 package repositories
 
 import (
-	"strings"
-
 	"github.com/chrislusf/gleam/util"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
@@ -16,18 +14,15 @@ type RepositoriesGitReader struct {
 	refs         storer.ReferenceIter
 }
 
-func New(path string, r *git.Repository) *RepositoriesGitReader {
+func New(r *git.Repository, path string) *RepositoriesGitReader {
 
 	refs, _ := r.References()
 	remotes, _ := r.Remotes()
-
 	urls := remotes[0].Config().URLs
-	repositoryID := strings.TrimPrefix(urls[0], "https://")
 
 	return &RepositoriesGitReader{
 		repo:         r,
-		path:         path,
-		repositoryID: repositoryID,
+		repositoryID: path,
 		urls:         urls,
 		refs:         refs,
 	}
@@ -53,5 +48,5 @@ root
 
 func (r *RepositoriesGitReader) Read() (row *util.Row, err error) {
 
-	return util.NewRow(util.Now(), r.repositoryID, r.path, r.urls), nil
+	return util.NewRow(util.Now(), r.repositoryID, r.urls), nil
 }

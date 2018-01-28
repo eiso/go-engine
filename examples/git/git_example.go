@@ -42,16 +42,16 @@ func main() {
 
 	f := flow.New("Git pipeline")
 
-	path := "/home/mthek/engine/keras"
+	path := "/home/mthek/projects/enginerepos/**"
 
 	//	repos := f.Read(git.Repositories(path, 1))
 
 	// KEY: refHash
-	refs := f.Read(git.References(path, 1)).
-		Map("RefsJoinCommits", registeredRefsKeyForCommits)
+	refs := f.Read(git.References(path, 1))
+	//	Map("RefsJoinCommits", registeredRefsKeyForCommits)
 	// KEY: commitHash (== refHash)
-	commits := f.Read(git.Commits(path, 1)).
-		Map("CommitsJoinRefs", registeredCommitsKeyForRefs)
+	//commits := f.Read(git.Commits(path, 1)).
+	//	Map("CommitsJoinRefs", registeredCommitsKeyForRefs)
 
 	// TODO
 	// Right now the references only point to a single commit hash
@@ -59,11 +59,11 @@ func main() {
 	// in the column for all the children commits
 
 	// KEY: commitHash
-	commitsJoinRefs := commits.LeftOuterJoinByKey("Commits & Refs", refs).
-		Map("CommitsJoinRefsKeyTrees", registeredCommitsJoinRefsKeyForTrees)
+	//commitsJoinRefs := commits.LeftOuterJoinByKey("Commits & Refs", refs).
+	//	Map("CommitsJoinRefsKeyTrees", registeredCommitsJoinRefsKeyForTrees)
 
 	// KEY: treeHash
-	commits2 := f.Read(git.Commits(path, 1)).
+	/*commits2 := f.Read(git.Commits(path, 1)).
 		Map("CommitsJoinRefs", registeredCommitsKeyForTrees)
 	// KEY: treeHash
 	trees := f.Read(git.Trees(path, 1)).
@@ -74,36 +74,36 @@ func main() {
 		Map("TreesJoinCommitsKeyCommits", registeredTreesJoinCommitsKeyForCommits)
 
 	commitsJoinTreesJoinRefs := treesJoinCommits.LeftOuterJoinByKey("Refs & Commits & Trees", commitsJoinRefs)
+	*/
+	q := refs.OutputRow(func(row *util.Row) error {
 
-	q := commitsJoinTreesJoinRefs.OutputRow(func(row *util.Row) error {
-
-		fmt.Printf("\n %s : %s : %s : %s : %s : %s : %s %s : %s : %s : %s : %s\n",
+		fmt.Printf("\n%s : %s : %s : %s\n",
 			gio.ToString(row.K[0]),
 			gio.ToString(row.V[0]),
 			gio.ToString(row.V[1]),
 			gio.ToString(row.V[2]),
-			gio.ToString(row.V[3]),
-			gio.ToString(row.V[4]),
-			gio.ToString(row.V[5]),
-			gio.ToString(row.V[6]),
-			gio.ToString(row.V[7]),
-			gio.ToString(row.V[8]),
-			gio.ToString(row.V[9]),
-			gio.ToString(row.V[10]),
-			gio.ToString(row.V[11]),
-			gio.ToString(row.V[12]),
-			gio.ToString(row.V[13]),
-			gio.ToString(row.V[14]),
-			gio.ToString(row.V[15]),
-			gio.ToString(row.V[16]),
-			gio.ToString(row.V[17]),
-			gio.ToString(row.V[18]),
-			gio.ToString(row.V[19]),
-			gio.ToString(row.V[20]),
-			gio.ToString(row.V[21]),
-			gio.ToString(row.V[22]),
-			gio.ToString(row.V[23]),
-			gio.ToString(row.V[24]),
+			/*	gio.ToString(row.V[3]),
+				gio.ToString(row.V[4]),
+				gio.ToString(row.V[5]),
+				gio.ToString(row.V[6]),
+				gio.ToString(row.V[7]),
+				gio.ToString(row.V[8]),
+				gio.ToString(row.V[9]),
+				gio.ToString(row.V[10]),
+				gio.ToString(row.V[11]),
+				gio.ToString(row.V[12]),
+				gio.ToString(row.V[13]),
+				gio.ToString(row.V[14]),
+				gio.ToString(row.V[15]),
+				gio.ToString(row.V[16]),
+				gio.ToString(row.V[17]),
+				gio.ToString(row.V[18]),
+				gio.ToString(row.V[19]),
+				gio.ToString(row.V[20]),
+				gio.ToString(row.V[21]),
+				gio.ToString(row.V[22]),
+				gio.ToString(row.V[23]),
+				gio.ToString(row.V[24]),*/
 		)
 		return nil
 	})

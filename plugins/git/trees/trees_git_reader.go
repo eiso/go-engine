@@ -3,7 +3,6 @@ package trees
 import (
 	"errors"
 	"strconv"
-	"strings"
 
 	"github.com/chrislusf/gleam/util"
 	git "gopkg.in/src-d/go-git.v4"
@@ -17,15 +16,11 @@ type TreesGitReader struct {
 	lastTreeHash string
 }
 
-func New(r *git.Repository) *TreesGitReader {
-	remotes, _ := r.Remotes()
+func New(r *git.Repository, path string) *TreesGitReader {
 	treeIter, _ := r.TreeObjects()
 
-	urls := remotes[0].Config().URLs
-	repositoryID := strings.TrimPrefix(urls[0], "https://")
-
 	return &TreesGitReader{
-		repositoryID: repositoryID,
+		repositoryID: path,
 		treeIter:     treeIter,
 	}
 }

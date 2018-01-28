@@ -1,29 +1,38 @@
 package commits
 
 import (
-	"strings"
-
 	"github.com/chrislusf/gleam/util"
 	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
 type CommitsGitReader struct {
 	repositoryID string
 	commits      object.CommitIter
+	refs         map[string]struct{}
 }
 
-func New(r *git.Repository) *CommitsGitReader {
+func New(r *git.Repository, path string) *CommitsGitReader {
 
-	remotes, _ := r.Remotes()
+	refs, _ := r.References()
 	commits, _ := r.CommitObjects()
 
-	urls := remotes[0].Config().URLs
-	repositoryID := strings.TrimPrefix(urls[0], "https://")
+	// References even in very large projects are limited enough
+	// that they can be stored and kept in memory when building
+	// the commits DataSource
+	m := make(map[string]struct{})
+	var e struct{}
+
+	refs.ForEach(func(ref *plumbing.Reference) error {
+		m[ref.Hash().String()] = e
+		return nil
+	})
 
 	return &CommitsGitReader{
-		repositoryID: repositoryID,
+		repositoryID: path,
 		commits:      commits,
+		refs:         m,
 	}
 }
 
