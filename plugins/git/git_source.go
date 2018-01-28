@@ -1,6 +1,7 @@
 package git
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -33,7 +34,6 @@ func (s *GitSource) Generate(f *flow.Flow) *flow.Dataset {
 	return s.genShardInfos(f).RoundRobin(s.prefix, s.PartitionCount).Map(s.prefix+".Read", registeredMapperReadShard)
 }
 
-// TODO adjust GitSource api to denote which data source can support columnar reads
 // Select selects fields that can be pushed down to data sources supporting columnar reads
 func (q *GitSource) Select(fields ...string) *GitSource {
 	q.Fields = fields
@@ -70,7 +70,17 @@ func newGitSource(gitDataType, fileOrPattern string, partitionCount int) *GitSou
 func (s *GitSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 	return f.Source(s.prefix+"."+s.fileBaseName, func(writer io.Writer, stats *pb.InstructionStat) error {
 		stats.InputCounter++
-		if !s.hasWildcard && filesystem.IsDir(s.Path) && filesystem.IsDir(filepath.Join(s.Path, "/.git/")) {
+		defer func() { log.Printf("Git repos: %d", stats.OutputCounter) }()
+
+		if s.hasWildcard {
+			return s.gitRepos(s.folder, writer, stats)
+		}
+
+		if !filesystem.IsDir(s.Path) {
+			return errors.New("source can't be be a file")
+		}
+
+		if s.isRepo(s.Path) {
 			stats.OutputCounter++
 			util.NewRow(util.Now(), encodeShardInfo(&GitShardInfo{
 				RepoPath:    s.Path,
@@ -78,43 +88,42 @@ func (s *GitSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 				HasHeader:   s.HasHeader,
 				Fields:      s.Fields,
 			})).WriteTo(writer)
-		} else {
-			var e []*filesystem.FileLocation
-
-			_, err := s.gitRepos(s.folder, e, writer, stats)
-			if err != nil {
-				return fmt.Errorf("Failed to list folder %s: %v", s.folder, err)
-			}
+			return nil
 		}
-		log.Printf("Git repos: %d", stats.OutputCounter)
-		return nil
+
+		return s.gitRepos(s.Path, writer, stats)
 	})
 }
 
-func (s *GitSource) gitRepos(folder string, v []*filesystem.FileLocation, writer io.Writer, stats *pb.InstructionStat) ([]*filesystem.FileLocation, error) {
+// Find all repositories in the directory
+func (s *GitSource) gitRepos(folder string, writer io.Writer, stats *pb.InstructionStat) error {
 	virtualFiles, err := filesystem.List(folder)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to list folder %s: %v", folder, err)
+		return fmt.Errorf("Failed to list folder %s: %v", folder, err)
 	}
 
 	for _, vf := range virtualFiles {
-		if filesystem.IsDir(vf.Location) {
-			if filesystem.IsDir(filepath.Join(vf.Location, "/.git/")) {
-				stats.OutputCounter++
-				util.NewRow(util.Now(), encodeShardInfo(&GitShardInfo{
-					RepoPath:    vf.Location,
-					GitDataType: s.GitDataType,
-					HasHeader:   s.HasHeader,
-					Fields:      s.Fields,
-				})).WriteTo(writer)
-
-				continue
-			} else {
-				v = append(v, vf)
-				s.gitRepos(vf.Location, v, writer, stats)
-			}
+		if !filesystem.IsDir(vf.Location) {
+			continue
 		}
+
+		if s.isRepo(vf.Location) {
+			stats.OutputCounter++
+			util.NewRow(util.Now(), encodeShardInfo(&GitShardInfo{
+				RepoPath:    vf.Location,
+				GitDataType: s.GitDataType,
+				HasHeader:   s.HasHeader,
+				Fields:      s.Fields,
+			})).WriteTo(writer)
+			continue
+		}
+
+		return s.gitRepos(vf.Location, writer, stats)
 	}
 
-	return v, nil
+	return err
+}
+
+func (s *GitSource) isRepo(path string) bool {
+	return filesystem.IsDir(filepath.Join(path, ".git"))
 }

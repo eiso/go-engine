@@ -36,56 +36,6 @@ func readShard(row []interface{}) error {
 	return decodeShardInfo(encodedShardInfo).ReadSplit()
 }
 
-// Pipeline strings together the given exec.Cmd commands in a similar fashion
-// to the Unix pipeline.  Each command's standard output is connected to the
-// standard input of the next command, and the output of the final command in
-// the pipeline is returned, along with the collected standard error of all
-// commands and the first error found (if any).
-//
-// To provide input to the pipeline, assign an io.Reader to the first's Stdin.
-func Pipeline(cmds ...*exec.Cmd) (pipeLineOutput, collectedStandardError []byte, pipeLineError error) {
-	// Require at least one command
-	if len(cmds) < 1 {
-		return nil, nil, nil
-	}
-
-	// Collect the output from the command(s)
-	var output bytes.Buffer
-	var stderr bytes.Buffer
-
-	last := len(cmds) - 1
-	for i, cmd := range cmds[:last] {
-		// Connect each command's stdin to the previous command's stdout
-		c, err := cmd.StdoutPipe()
-		cmds[i+1].Stdin = c
-		if err != nil {
-			return nil, nil, err
-		}
-		// Connect each command's stderr to a buffer
-		cmd.Stderr = &stderr
-	}
-
-	// Connect the output and error for the last command
-	cmds[last].Stdout, cmds[last].Stderr = &output, &stderr
-
-	// Start each command
-	for _, cmd := range cmds {
-		if err := cmd.Start(); err != nil {
-			return output.Bytes(), stderr.Bytes(), err
-		}
-	}
-
-	// Wait for each command to complete
-	for _, cmd := range cmds {
-		if err := cmd.Wait(); err != nil {
-			return output.Bytes(), stderr.Bytes(), err
-		}
-	}
-
-	// Return the pipeline output and the collected standard error
-	return output.Bytes(), stderr.Bytes(), nil
-}
-
 func removeDuplicates(a []string) []string {
 	result := []string{}
 	seen := map[string]string{}
@@ -101,28 +51,16 @@ func removeDuplicates(a []string) []string {
 func getRefChildren(path string, refHash string, refName string) error {
 	cmdName := "git"
 	cmdArgs := []string{"rev-list", "--children", refHash}
-	cmd1 := exec.Command(cmdName, cmdArgs...)
-	cmd1.Dir = path
+	cmd := exec.Command(cmdName, cmdArgs...)
+	cmd.Dir = path
 
-	//cmdName2 := "cut"
-	//cmdArgs2 := []string{"-d", "\" \"", "-f", "1"}
-	//cmd2 := exec.Command(cmdName2, cmdArgs2...)
-
-	//cmd3 := exec.Command("uniq")
-
-	output, stderr, err := Pipeline(cmd1)
+	output, err := cmd.Output()
 	if err != nil {
-		return fmt.Errorf("pipeline failed: %s", err)
-	}
-	if len(stderr) > 0 {
-		return fmt.Errorf("pipeline failed, stderr: %s", stderr)
+		fmt.Errorf("There was an error running %s %s: %s", cmdName, cmdArgs, err)
 	}
 
 	s := strings.Fields(string(output))
-	log.Printf("%d", len(s))
 	o := removeDuplicates(s)
-	log.Printf("%d", len(o))
-
 	for _, commitHash := range o {
 		row := util.NewRow(util.Now(), path, refHash, refName, commitHash)
 		row.WriteTo(os.Stdout)

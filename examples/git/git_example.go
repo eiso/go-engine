@@ -47,20 +47,15 @@ func main() {
 	//	repos := f.Read(git.Repositories(path, 1))
 
 	// KEY: refHash
-	refs := f.Read(git.References(path, 1))
-	//	Map("RefsJoinCommits", registeredRefsKeyForCommits)
+	refs := f.Read(git.References(path, 1)).
+		Map("RefsJoinCommits", registeredRefsKeyForCommits)
 	// KEY: commitHash (== refHash)
-	//commits := f.Read(git.Commits(path, 1)).
-	//	Map("CommitsJoinRefs", registeredCommitsKeyForRefs)
-
-	// TODO
-	// Right now the references only point to a single commit hash
-	// For practical behaviour you want that reference to also be
-	// in the column for all the children commits
+	commits := f.Read(git.Commits(path, 1)).
+		Map("CommitsJoinRefs", registeredCommitsKeyForRefs)
 
 	// KEY: commitHash
-	//commitsJoinRefs := commits.LeftOuterJoinByKey("Commits & Refs", refs).
-	//	Map("CommitsJoinRefsKeyTrees", registeredCommitsJoinRefsKeyForTrees)
+	commitsJoinRefs := commits.LeftOuterJoinByKey("Commits & Refs", refs).
+		Map("CommitsJoinRefsKeyTrees", registeredCommitsJoinRefsKeyForTrees)
 
 	// KEY: treeHash
 	/*commits2 := f.Read(git.Commits(path, 1)).
@@ -75,22 +70,22 @@ func main() {
 
 	commitsJoinTreesJoinRefs := treesJoinCommits.LeftOuterJoinByKey("Refs & Commits & Trees", commitsJoinRefs)
 	*/
-	q := refs.OutputRow(func(row *util.Row) error {
+	q := commitsJoinRefs.OutputRow(func(row *util.Row) error {
 
 		fmt.Printf("\n%s : %s : %s : %s\n",
 			gio.ToString(row.K[0]),
 			gio.ToString(row.V[0]),
 			gio.ToString(row.V[1]),
 			gio.ToString(row.V[2]),
-			/*	gio.ToString(row.V[3]),
-				gio.ToString(row.V[4]),
-				gio.ToString(row.V[5]),
-				gio.ToString(row.V[6]),
-				gio.ToString(row.V[7]),
-				gio.ToString(row.V[8]),
-				gio.ToString(row.V[9]),
-				gio.ToString(row.V[10]),
-				gio.ToString(row.V[11]),
+			gio.ToString(row.V[3]),
+			gio.ToString(row.V[4]),
+			gio.ToString(row.V[5]),
+			gio.ToString(row.V[6]),
+			gio.ToString(row.V[7]),
+			gio.ToString(row.V[8]),
+			gio.ToString(row.V[9]),
+			gio.ToString(row.V[10]),
+		/*		gio.ToString(row.V[11]),
 				gio.ToString(row.V[12]),
 				gio.ToString(row.V[13]),
 				gio.ToString(row.V[14]),
@@ -121,10 +116,12 @@ type refs struct{}
 
 func (refs) keyForCommits(x []interface{}) error {
 	// repositoryID := x[0]
+	commitHash := x[3]
 	refHash := x[1]
 	refName := x[2]
 
 	gio.Emit(
+		commitHash,
 		refHash,
 		refName,
 	)
