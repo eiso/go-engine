@@ -37,15 +37,7 @@ func (r *RepositoriesGitReader) ReadHeader() (fieldNames []string, err error) {
 	return fieldNames, nil
 }
 
-/*
-root
- |-- id: string (nullable = false)
- |-- urls: array (nullable = false)
- |    |-- element: string (containsNull = false)
- |-- is_fork: boolean (nullable = true)
- |-- repository_path: string (nullable = true)
-*/
-
+//TODO: add is_fork
 func (r *RepositoriesGitReader) Read() (row *util.Row, err error) {
 
 	return util.NewRow(util.Now(), r.repositoryID, r.urls), nil

@@ -99,7 +99,6 @@ func (ds *GitShardInfo) ReadSplit() error {
 			}
 			return nil
 		})
-		os.Exit(1)
 	default:
 		for {
 			row, err := reader.Read()

@@ -56,24 +56,6 @@ func (r *CommitsGitReader) ReadHeader() (fieldNames []string, err error) {
 	return fieldNames, nil
 }
 
-/*
-root
- |-- repository_id: string (nullable = false)
- |-- reference_name: string (nullable = false)
- |-- index: integer (nullable = false)
- |-- hash: string (nullable = false)
- |-- message: string (nullable = false)
- |-- parents: array (nullable = true)
- |    |-- element: string (containsNull = false)
- |-- parents_count: integer (nullable = false)
- |-- author_email: string (nullable = true)
- |-- author_name: string (nullable = true)
- |-- author_date: timestamp (nullable = true)
- |-- committer_email: string (nullable = true)
- |-- committer_name: string (nullable = true)
- |-- committer_date: timestamp (nullable = true)
-*/
-
 func (r *CommitsGitReader) Read() (row *util.Row, err error) {
 
 	commit, err := r.commits.Next()

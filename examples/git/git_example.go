@@ -35,7 +35,7 @@ func main() {
 	gio.Init()
 
 	f := flow.New("Git pipeline")
-	path := "/home/mthek/projects/enginerepos-srcd/ml"
+	path := "/home/mthek/projects/enginerepos-srcd/**"
 
 	//repos := f.Read(git.Repositories(path, 1))
 
@@ -45,14 +45,14 @@ func main() {
 	commits := f.Read(git.Commits(path, 1)).
 		Map("CommitsJoinRefs", regKeyCommitHash)
 
-	commitsJoinRefs := commits.LeftOuterJoinByKey("Commits & Refs", refs)
+	joinA := refs.LeftOuterJoinByKey("Commits & Refs", commits)
 
 	trees := f.Read(git.Trees(path, 1)).
 		Map("CommitsJoinTrees", regKeyTreeHash)
 
-	commitsJoinTrees := trees.LeftOuterJoinByKey("Trees & Commits", commitsJoinRefs)
+	joinB := trees.LeftOuterJoinByKey("Trees & Commits", joinA)
 
-	q := commitsJoinTrees.OutputRow(func(row *util.Row) error {
+	p := joinB.OutputRow(func(row *util.Row) error {
 		fmt.Printf("\n\n%s\t", gio.ToString(row.K[0]))
 		i := 0
 		for _, v := range row.V {
@@ -63,11 +63,11 @@ func main() {
 	})
 
 	if *isDistributed {
-		q.Run(distributed.Option())
+		p.Run(distributed.Option())
 	} else if *isDockerCluster {
-		q.Run(distributed.Option().SetMaster("master:45326"))
+		p.Run(distributed.Option().SetMaster("master:45326"))
 	} else {
-		q.Run()
+		p.Run()
 	}
 }
 
@@ -85,7 +85,7 @@ func flipKey(newKeyIdx int) gio.Mapper {
 	}
 }
 
-// Update to new index approach
+//TODO: Update to new index approach
 func readBlob(x []interface{}) error {
 	repoPath := gio.ToString(x[1])
 	blobHash := plumbing.NewHash(gio.ToString(x[5]))
@@ -127,7 +127,7 @@ func classifyLanguage(fileNameIdx int, contentIdx int) gio.Mapper {
 	}
 }
 
-// Update to new index approach
+//TODO: Update to new index approach
 func extractUAST(x []interface{}) error {
 	client, err := bblfsh.NewClient("0.0.0.0:9432")
 	if err != nil {
@@ -136,7 +136,6 @@ func extractUAST(x []interface{}) error {
 
 	blob := gio.ToString(x[4])
 
-	// TODO language classification with Enry as an earlier step
 	res, err := client.NewParseRequest().Language("python").Content(blob).Do()
 	if err != nil {
 		panic(err)

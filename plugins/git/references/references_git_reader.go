@@ -30,14 +30,7 @@ func (r *ReferencesGitReader) ReadHeader() (fieldNames []string, err error) {
 	return fieldNames, nil
 }
 
-/*
-root
- |-- repository_id: string (nullable = false)
- |-- name: string (nullable = false)
- |-- hash: string (nullable = false)
- |-- is_remote: boolean (nullable = false)
-*/
-
+//TODO: add is_remote
 func (r *ReferencesGitReader) Read() (row *util.Row, err error) {
 
 	ref, err := r.refs.Next()

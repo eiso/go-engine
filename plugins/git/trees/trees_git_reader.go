@@ -38,15 +38,6 @@ func (r *TreesGitReader) ReadHeader() (fieldNames []string, err error) {
 	return fieldNames, nil
 }
 
-/*
-root
- |-- commit_hash: string (nullable = false)
- |-- repository_id: string (nullable = false)
- |-- reference_name: string (nullable = false)
- |-- path: string (nullable = false)
- |-- blob: string (nullable = false)
-*/
-
 func (r *TreesGitReader) Read() (row *util.Row, err error) {
 	if r.fileIter == nil {
 		tree, err := r.treeIter.Next()
