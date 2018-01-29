@@ -35,7 +35,7 @@ func main() {
 	gio.Init()
 
 	f := flow.New("Git pipeline")
-	path := "/home/mthek/projects/enginerepos-srcd/**"
+	path := "/home/mthek/projects/enginerepos-srcd/ml"
 
 	repos := f.Read(git.Repositories(path, 1))
 	refs := f.Read(git.References(path, 1))
@@ -50,11 +50,10 @@ func main() {
 	//joinC := trees.JoinByKey("Trees & Commits", joinB)
 
 	p := joinB.OutputRow(func(row *util.Row) error {
-		fmt.Printf("\n\n%s\t", gio.ToString(row.K[0]))
+		fmt.Printf("\n\n%s\t", toPrint(row.K[0]))
 		i := 0
-		//TODO: check if [string] and convert to string
 		for _, v := range row.V {
-			fmt.Printf("%s\t", gio.ToString(v))
+			fmt.Printf("%s\t", toPrint(v))
 			i++
 		}
 		return nil
@@ -145,6 +144,10 @@ func extractUAST(x []interface{}) error {
 
 	gio.Emit(x[0], x[1], x[2], x[3], x[4], x[5], res.Language)
 	return nil
+}
+
+func toPrint(val interface{}) string {
+	return fmt.Sprintf("%v", val)
 }
 
 func truncateString(str string, num int) string {
