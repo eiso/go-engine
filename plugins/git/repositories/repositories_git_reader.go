@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"errors"
+	"io"
 
 	"github.com/chrislusf/gleam/util"
 	git "gopkg.in/src-d/go-git.v4"
@@ -9,13 +9,13 @@ import (
 
 type RepositoriesGitReader struct {
 	repositoryID string
-	repo         *git.Repository
+	repos        *reposIter
 }
 
 func New(r *git.Repository, path string) *RepositoriesGitReader {
 
 	return &RepositoriesGitReader{
-		repo:         r,
+		repos:        newReposIter(r),
 		repositoryID: path,
 	}
 }
@@ -32,7 +32,7 @@ func (r *RepositoriesGitReader) ReadHeader() (fieldNames []string, err error) {
 //TODO: add is_fork
 func (r *RepositoriesGitReader) Read() (row *util.Row, err error) {
 
-	repository := r.repo
+	repository, err := r.repos.Next()
 	if err != nil {
 		return nil, err
 	}
@@ -50,5 +50,23 @@ func (r *RepositoriesGitReader) Read() (row *util.Row, err error) {
 		return nil, err
 	}
 
-	return util.NewRow(util.Now(), r.repositoryID, head.Hash().String(), remoteURLs), errors.New("repository read")
+	return util.NewRow(util.Now(), r.repositoryID, head.Hash().String(), remoteURLs), nil
+}
+
+type reposIter struct {
+	repos []*git.Repository
+	pos   int
+}
+
+func newReposIter(repos ...*git.Repository) *reposIter {
+	return &reposIter{repos: repos}
+}
+
+func (iter *reposIter) Next() (*git.Repository, error) {
+	if iter.pos >= len(iter.repos) {
+		return nil, io.EOF
+	}
+	repo := iter.repos[iter.pos]
+	iter.pos++
+	return repo, nil
 }
