@@ -28,9 +28,9 @@ func New(r *git.Repository, path string) *TreesGitReader {
 func (r *TreesGitReader) ReadHeader() (fieldNames []string, err error) {
 	fieldNames = []string{
 		"repositoryID",
-		"treeHash",
-		"fileName",
 		"blobHash",
+		"fileName",
+		"treeHash",
 		"blobSize",
 		"isBinary",
 	}

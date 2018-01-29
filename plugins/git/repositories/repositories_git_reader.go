@@ -1,38 +1,30 @@
 package repositories
 
 import (
+	"errors"
+
 	"github.com/chrislusf/gleam/util"
 	git "gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 )
 
 type RepositoriesGitReader struct {
-	repo         *git.Repository
-	path         string
 	repositoryID string
-	urls         []string
-	refs         storer.ReferenceIter
+	repo         *git.Repository
 }
 
 func New(r *git.Repository, path string) *RepositoriesGitReader {
 
-	refs, _ := r.References()
-	remotes, _ := r.Remotes()
-	urls := remotes[0].Config().URLs
-
 	return &RepositoriesGitReader{
 		repo:         r,
 		repositoryID: path,
-		urls:         urls,
-		refs:         refs,
 	}
 }
 
 func (r *RepositoriesGitReader) ReadHeader() (fieldNames []string, err error) {
 	fieldNames = []string{
 		"repositoryID",
-		"repositoryPath",
 		"repositoryURLs",
+		"headRef",
 	}
 	return fieldNames, nil
 }
@@ -40,5 +32,23 @@ func (r *RepositoriesGitReader) ReadHeader() (fieldNames []string, err error) {
 //TODO: add is_fork
 func (r *RepositoriesGitReader) Read() (row *util.Row, err error) {
 
-	return util.NewRow(util.Now(), r.repositoryID, r.urls), nil
+	repository := r.repo
+	if err != nil {
+		return nil, err
+	}
+
+	//TODO: check the remotes list results against results from native git
+	// for repositories with many remotes, right now it only goes on [0]
+	listRemotes, err := repository.Remotes()
+	if err != nil {
+		return nil, err
+	}
+	remoteURLs := listRemotes[0].Config().URLs
+
+	head, err := repository.Head()
+	if err != nil {
+		return nil, err
+	}
+
+	return util.NewRow(util.Now(), r.repositoryID, head.Hash().String(), remoteURLs), errors.New("repository read")
 }

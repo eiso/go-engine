@@ -102,13 +102,18 @@ func (ds *GitShardInfo) ReadSplit() error {
 	default:
 		for {
 			row, err := reader.Read()
-			if err != nil {
+			if err != nil && row == nil {
 				break
 			}
-			if row == nil {
+			if err == nil && row == nil {
 				continue
 			}
+
 			row.WriteTo(os.Stdout)
+
+			if err != nil && row != nil {
+				break
+			}
 		}
 	}
 

@@ -24,7 +24,7 @@ var (
 
 	regKeyRefHash    = gio.RegisterMapper(flipKey(3))
 	regKeyCommitHash = gio.RegisterMapper(flipKey(1))
-	regKeyTreeHash   = gio.RegisterMapper(flipKey(2))
+	regKeyTreeHash   = gio.RegisterMapper(flipKey(1))
 
 	regReadBlob         = gio.RegisterMapper(readBlob)
 	regClassifyLanguage = gio.RegisterMapper(classifyLanguage(2, 6))
@@ -37,24 +37,22 @@ func main() {
 	f := flow.New("Git pipeline")
 	path := "/home/mthek/projects/enginerepos-srcd/**"
 
-	//repos := f.Read(git.Repositories(path, 1))
-
-	refs := f.Read(git.References(path, 1)).
-		Map("RefsJoinCommits", regKeyRefHash)
-
+	repos := f.Read(git.Repositories(path, 1))
+	refs := f.Read(git.References(path, 1))
 	commits := f.Read(git.Commits(path, 1)).
-		Map("CommitsJoinRefs", regKeyCommitHash)
+		Map("KeyCommitHash", regKeyCommitHash)
+	//trees := f.Read(git.Trees(path, 1)).
+	//	Map("KeyTreeHash", regKeyTreeHash)
 
-	joinA := refs.LeftOuterJoinByKey("Commits & Refs", commits)
-
-	trees := f.Read(git.Trees(path, 1)).
-		Map("CommitsJoinTrees", regKeyTreeHash)
-
-	joinB := trees.LeftOuterJoinByKey("Trees & Commits", joinA)
+	joinA := refs.JoinByKey("Refs & Repos", repos).
+		Map("KeyRefHash", regKeyRefHash)
+	joinB := joinA.LeftOuterJoinByKey("Refs & Commits", commits)
+	//joinC := trees.JoinByKey("Trees & Commits", joinB)
 
 	p := joinB.OutputRow(func(row *util.Row) error {
 		fmt.Printf("\n\n%s\t", gio.ToString(row.K[0]))
 		i := 0
+		//TODO: check if [string] and convert to string
 		for _, v := range row.V {
 			fmt.Printf("%s\t", gio.ToString(v))
 			i++
