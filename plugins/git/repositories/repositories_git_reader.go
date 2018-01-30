@@ -43,7 +43,12 @@ func (r *RepositoriesGitReader) Read() (row *util.Row, err error) {
 	if err != nil {
 		return nil, err
 	}
-	remoteURLs := listRemotes[0].Config().URLs
+
+	var remoteURLs []string
+
+	if len(listRemotes) > 0 {
+		remoteURLs = listRemotes[0].Config().URLs
+	}
 
 	head, err := repository.Head()
 	if err != nil {

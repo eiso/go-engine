@@ -21,6 +21,7 @@ type GitShardInfo struct {
 	GitDataType string
 	HasHeader   bool
 	Fields      []string
+	Optimize    bool
 }
 
 var (
@@ -78,7 +79,7 @@ func (ds *GitShardInfo) ReadSplit() error {
 		return err
 	}
 
-	reader, err := ds.NewReader(r, ds.RepoPath)
+	reader, err := ds.NewReader(r, ds.RepoPath, ds.Optimize)
 	if err != nil {
 		return fmt.Errorf("Failed to read repository %s: %v", ds.RepoPath, err)
 	}

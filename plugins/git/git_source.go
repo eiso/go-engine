@@ -23,6 +23,7 @@ type GitSource struct {
 	PartitionCount int
 	GitDataType    string
 	Fields         []string
+	Optimize       bool
 
 	prefix string
 }
@@ -40,25 +41,34 @@ func (q *GitSource) Select(fields ...string) *GitSource {
 	return q
 }
 
+func newGitSourceOptions(gitDataType string, fsPath string, optimize bool, partitionCount int) *GitSource {
+
+	s := newGitSource("trees", fsPath, partitionCount)
+	s.Optimize = true
+
+	return s
+}
+
 // New creates a GitSource based on a path.
-func newGitSource(gitDataType, fileOrPattern string, partitionCount int) *GitSource {
+func newGitSource(gitDataType string, fsPath string, partitionCount int) *GitSource {
 
 	s := &GitSource{
 		PartitionCount: partitionCount,
 		GitDataType:    gitDataType,
 		prefix:         gitDataType,
 		HasHeader:      true,
+		Optimize:       false,
 	}
 
 	var err error
-	fileOrPattern, err = filepath.Abs(fileOrPattern)
+	fsPath, err = filepath.Abs(fsPath)
 	if err != nil {
-		log.Fatalf("path \"%s\" not found: %v", fileOrPattern, err)
+		log.Fatalf("path \"%s\" not found: %v", fsPath, err)
 	}
 
-	s.folder = filepath.Dir(fileOrPattern)
-	s.fileBaseName = filepath.Base(fileOrPattern)
-	s.Path = fileOrPattern
+	s.folder = filepath.Dir(fsPath)
+	s.fileBaseName = filepath.Base(fsPath)
+	s.Path = fsPath
 
 	if strings.Contains(s.fileBaseName, "**") {
 		s.hasWildcard = true
@@ -87,6 +97,7 @@ func (s *GitSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 				GitDataType: s.GitDataType,
 				HasHeader:   s.HasHeader,
 				Fields:      s.Fields,
+				Optimize:    s.Optimize,
 			})).WriteTo(writer)
 			return nil
 		}
@@ -114,6 +125,7 @@ func (s *GitSource) gitRepos(folder string, writer io.Writer, stats *pb.Instruct
 				GitDataType: s.GitDataType,
 				HasHeader:   s.HasHeader,
 				Fields:      s.Fields,
+				Optimize:    s.Optimize,
 			})).WriteTo(writer)
 			continue
 		}

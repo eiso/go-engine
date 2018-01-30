@@ -14,17 +14,19 @@ type TreesGitReader struct {
 	repo               *git.Repository
 	refsIter           storer.ReferenceIter
 	fileIter           *object.FileIter
-	commitHash         string
+	refHash            string
 	treeHashFromCommit string
+	flag               bool
 }
 
-func New(r *git.Repository, path string) *TreesGitReader {
+func New(r *git.Repository, path string, flag bool) *TreesGitReader {
 	refsIter, _ := r.References()
 
 	return &TreesGitReader{
 		repositoryID: path,
 		repo:         r,
 		refsIter:     refsIter,
+		flag:         flag,
 	}
 }
 
@@ -48,7 +50,7 @@ func (r *TreesGitReader) Read() (row *util.Row, err error) {
 		if err != nil {
 			return nil, fmt.Errorf("end of refsIter")
 		}
-		r.commitHash = ref.Hash().String()
+		r.refHash = ref.Hash().String()
 
 		commit, err := r.repo.CommitObject(ref.Hash())
 		if err != nil {
@@ -75,7 +77,7 @@ func (r *TreesGitReader) Read() (row *util.Row, err error) {
 
 	return util.NewRow(util.Now(),
 		r.repositoryID,
-		r.commitHash,
+		r.refHash,
 		r.treeHashFromCommit,
 		file.Blob.Hash.String(),
 		file.Name,

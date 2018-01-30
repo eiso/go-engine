@@ -34,13 +34,13 @@ func main() {
 	gio.Init()
 
 	f := flow.New("Git pipeline")
-	path := "/home/mthek/projects/enginerepos-srcd/**"
+	path := "/home/mthek/projects/enginerepos/**"
 
 	repos := f.Read(git.Repositories(path, 1))
 	refs := f.Read(git.References(path, 1)) //.Pipe("grep", "grep -e 'refs/heads/master'")
 	commits := f.Read(git.Commits(path, 1)).
 		Map("KeyCommitHash", regKeyCommitHash)
-	trees := f.Read(git.Trees(path, 1)).
+	trees := f.Read(git.Trees(path, false, 1)).
 		Map("KeyTreeHash", regKeyCommitHash)
 
 	joinA := refs.JoinByKey("Refs & Repos", repos).

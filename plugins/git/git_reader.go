@@ -17,23 +17,23 @@ type GitReader interface {
 	ReadHeader() (fieldNames []string, err error)
 }
 
-func Repositories(fileOrPattern string, partitionCount int) *GitSource {
-	return newGitSource("repositories", fileOrPattern, partitionCount)
+func Repositories(fsPath string, partitionCount int) *GitSource {
+	return newGitSource("repositories", fsPath, partitionCount)
 }
-func References(fileOrPattern string, partitionCount int) *GitSource {
-	return newGitSource("references", fileOrPattern, partitionCount)
+func References(fsPath string, partitionCount int) *GitSource {
+	return newGitSource("references", fsPath, partitionCount)
 }
-func Commits(fileOrPattern string, partitionCount int) *GitSource {
-	return newGitSource("commits", fileOrPattern, partitionCount)
+func Commits(fsPath string, partitionCount int) *GitSource {
+	return newGitSource("commits", fsPath, partitionCount)
 }
-func Trees(fileOrPattern string, partitionCount int) *GitSource {
-	return newGitSource("trees", fileOrPattern, partitionCount)
+func Trees(fsPath string, flag bool, partitionCount int) *GitSource {
+	return newGitSourceOptions("trees", fsPath, flag, partitionCount)
 }
-func Blobs(fileOrPattern string, partitionCount int) *GitSource {
-	return newGitSource("blobs", fileOrPattern, partitionCount)
+func Blobs(fsPath string, partitionCount int) *GitSource {
+	return newGitSource("blobs", fsPath, partitionCount)
 }
 
-func (ds *GitShardInfo) NewReader(r *git.Repository, path string) (GitReader, error) {
+func (ds *GitShardInfo) NewReader(r *git.Repository, path string, flag bool) (GitReader, error) {
 	switch ds.GitDataType {
 	case "repositories":
 		return repositories.New(r, path), nil
@@ -42,7 +42,7 @@ func (ds *GitShardInfo) NewReader(r *git.Repository, path string) (GitReader, er
 	case "commits":
 		return commits.New(r, path), nil
 	case "trees":
-		return trees.New(r, path), nil
+		return trees.New(r, path, flag), nil
 	case "blobs":
 		return blobs.New(r, path), nil
 	}
