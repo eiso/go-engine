@@ -24,7 +24,6 @@ var (
 
 	regKeyRefHash    = gio.RegisterMapper(flipKey(3))
 	regKeyCommitHash = gio.RegisterMapper(flipKey(1))
-	regKeyTreeHash   = gio.RegisterMapper(flipKey(1))
 
 	regReadBlob         = gio.RegisterMapper(readBlob)
 	regClassifyLanguage = gio.RegisterMapper(classifyLanguage(2, 6))
@@ -35,25 +34,25 @@ func main() {
 	gio.Init()
 
 	f := flow.New("Git pipeline")
-	path := "/home/mthek/projects/enginerepos-srcd/ml"
+	path := "/home/mthek/projects/enginerepos-srcd/**"
 
 	repos := f.Read(git.Repositories(path, 1))
-	refs := f.Read(git.References(path, 1))
+	refs := f.Read(git.References(path, 1)) //.Pipe("grep", "grep -e 'refs/heads/master'")
 	commits := f.Read(git.Commits(path, 1)).
 		Map("KeyCommitHash", regKeyCommitHash)
-	//trees := f.Read(git.Trees(path, 1)).
-	//	Map("KeyTreeHash", regKeyTreeHash)
+	trees := f.Read(git.Trees(path, 1)).
+		Map("KeyTreeHash", regKeyCommitHash)
 
 	joinA := refs.JoinByKey("Refs & Repos", repos).
 		Map("KeyRefHash", regKeyRefHash)
 	joinB := joinA.LeftOuterJoinByKey("Refs & Commits", commits)
-	//joinC := trees.JoinByKey("Trees & Commits", joinB)
+	joinC := joinB.JoinByKey("Trees & Refs & Commits", trees)
 
-	p := joinB.OutputRow(func(row *util.Row) error {
-		fmt.Printf("\n\n%s\t", toPrint(row.K[0]))
+	p := joinC.OutputRow(func(row *util.Row) error {
+		fmt.Printf("\n\n%v\t", row.K[0])
 		i := 0
 		for _, v := range row.V {
-			fmt.Printf("%s\t", toPrint(v))
+			fmt.Printf("%v\t", v)
 			i++
 		}
 		return nil
@@ -146,17 +145,12 @@ func extractUAST(x []interface{}) error {
 	return nil
 }
 
-func toPrint(val interface{}) string {
-	return fmt.Sprintf("%v", val)
-}
-
-func truncateString(str string, num int) string {
-	b := str
-	if len(str) > num {
-		if num > 3 {
-			num -= 3
+func truncateString(v interface{}, num int) interface{} {
+	b := v
+	if v, ok := v.(string); ok {
+		if len(v) > num {
+			b = v[0:num]
 		}
-		b = str[0:num] + "..."
 	}
 	return b
 }

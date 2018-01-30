@@ -1,27 +1,30 @@
 package trees
 
 import (
-	"errors"
-	"strconv"
+	"fmt"
 
 	"github.com/chrislusf/gleam/util"
+	"github.com/src-d/go-git/plumbing/storer"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
 type TreesGitReader struct {
-	repositoryID string
-	treeIter     *object.TreeIter
-	fileIter     *object.FileIter
-	lastTreeHash string
+	repositoryID       string
+	repo               *git.Repository
+	refsIter           storer.ReferenceIter
+	fileIter           *object.FileIter
+	commitHash         string
+	treeHashFromCommit string
 }
 
 func New(r *git.Repository, path string) *TreesGitReader {
-	treeIter, _ := r.TreeObjects()
+	refsIter, _ := r.References()
 
 	return &TreesGitReader{
 		repositoryID: path,
-		treeIter:     treeIter,
+		repo:         r,
+		refsIter:     refsIter,
 	}
 }
 
@@ -40,11 +43,25 @@ func (r *TreesGitReader) ReadHeader() (fieldNames []string, err error) {
 
 func (r *TreesGitReader) Read() (row *util.Row, err error) {
 	if r.fileIter == nil {
-		tree, err := r.treeIter.Next()
+
+		ref, err := r.refsIter.Next()
 		if err != nil {
-			return nil, errors.New("end of treeIter")
+			return nil, fmt.Errorf("end of refsIter")
 		}
-		r.lastTreeHash = tree.Hash.String()
+		r.commitHash = ref.Hash().String()
+
+		commit, err := r.repo.CommitObject(ref.Hash())
+		if err != nil {
+			return nil, err
+		}
+
+		treeHash := commit.TreeHash
+		tree, err := r.repo.TreeObject(treeHash)
+		if err != nil {
+			return nil, err
+		}
+		r.treeHashFromCommit = treeHash.String()
+
 		r.fileIter = tree.Files()
 	}
 
@@ -58,10 +75,11 @@ func (r *TreesGitReader) Read() (row *util.Row, err error) {
 
 	return util.NewRow(util.Now(),
 		r.repositoryID,
+		r.commitHash,
+		r.treeHashFromCommit,
 		file.Blob.Hash.String(),
 		file.Name,
-		r.lastTreeHash,
 		file.Blob.Size,
-		strconv.FormatBool(binary),
+		binary,
 	), nil
 }
