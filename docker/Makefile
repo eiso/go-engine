@@ -13,6 +13,7 @@ clean:
 	go clean $(PIPELINE_SOURCE_DIR)
 	rm -f $(BINARY)
 	rm -f $(BINARY_PIPELINE)
+	rm -f $(BINARY_PIPELINE)-darwin
 
 deps:
 	go get $(GO_FLAGS) -d $(SOURCE_DIR)
@@ -34,6 +35,9 @@ deps_pipeline:
 pipeline: deps_pipeline
 	CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o $(BINARY_PIPELINE) $(PIPELINE_SOURCE_DIR)
 
+pipeline-darwin: deps_pipeline
+	GOOS=darwin CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o $(BINARY_PIPELINE)-darwin $(PIPELINE_SOURCE_DIR)
+
 docker_pipeline: pipeline
 	docker build -f Dockerfile.pipeline -t eisokant/pipeline .
-	docker push eisokant/pipeline
+	docker push eisokant/pipeline -ldflags '-extldflags "-static"' -o $(BINARY_PIPELINE) $(PIPELINE_SOURCE_DIR) -ldflags '-extldflags "-static"' -o $(BINARY_PIPELINE) $(PIPELINE_SOURCE_DIR)

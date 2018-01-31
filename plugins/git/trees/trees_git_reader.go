@@ -72,7 +72,7 @@ func (r *Reader) Read() (*util.Row, error) {
 	file, err := r.fileIter.Next()
 	if err == io.EOF {
 		r.fileIter = nil
-		return nil, nil
+		return nil, err
 	} else if err != nil {
 		return nil, errors.Wrap(err, "could not get next file")
 	}

@@ -23,10 +23,8 @@ func main() {
 	var (
 		isDistributed   = flag.Bool("distributed", false, "run in distributed or not")
 		isDockerCluster = flag.Bool("onDocker", false, "run in docker cluster")
-
-		regKeyRefHash    = gio.RegisterMapper(flipKey(3))
-		regKeyCommitHash = gio.RegisterMapper(flipKey(1))
 	)
+
 	gio.Init()
 
 	var path = "."
@@ -37,23 +35,13 @@ func main() {
 
 	start := time.Now()
 
-	f := flow.New("Git pipeline")
+	p, opts, err := queryExample(path, "allFilesAcrossAllBranches")
+	if err != nil {
+		fmt.Printf("could not load query: %s", err)
+	}
 
-	repos := f.Read(git.Repositories(path, 1))
-	refs := f.Read(git.References(path, 1))
-	commits := f.Read(git.Commits(path, 1)).
-		Map("KeyCommitHash", regKeyCommitHash)
-	trees := f.Read(git.Trees(path, false, 1)).
-		Map("KeyTreeHash", regKeyCommitHash)
+	p.OutputRow(printRow)
 
-	p := refs.
-		JoinByKey("Refs & Repos", repos).
-		Map("KeyRefHash", regKeyRefHash).
-		LeftOuterJoinByKey("Refs & Commits", commits).
-		JoinByKey("Trees & Refs & Commits", trees).
-		OutputRow(printRow)
-
-	var opts []flow.FlowOption
 	switch {
 	case *isDistributed:
 		opts = append(opts, distributed.Option())
@@ -63,6 +51,43 @@ func main() {
 	p.Run(opts...)
 
 	log.Printf("\nprocessed %d rows successfully in %v\n", count, time.Since(start))
+}
+
+var (
+	opts    []flow.FlowOption
+	regKey1 = gio.RegisterMapper(columnToKey(1))
+	refKey2 = gio.RegisterMapper(columnToKey(1))
+	regKey3 = gio.RegisterMapper(columnToKey(3))
+)
+
+func queryExample(path, query string) (*flow.Dataset, []flow.FlowOption, error) {
+	f := flow.New(fmt.Sprintf("Pipeline: %s", query))
+	var p *flow.Dataset
+
+	repos := f.Read(git.Repositories(path, 1))
+	refs := f.Read(git.References(path, 1))
+	commits := f.Read(git.Commits(path, 1))
+	trees := f.Read(git.Trees(path, false, 1))
+
+	switch query {
+	case "allFilesAcrossAllBranches":
+		p = trees.
+			Map("KeyRefHash", regKey1).
+			JoinByKey("Trees & References",
+				refs.Map("KeyRefHash", regKey1),
+			)
+	case "allCommitsAcrossAllBranches":
+		p = commits.
+			Map("KeyCommitHash", regKey1).
+			JoinByKey("Commits & References",
+				refs.Map("KeyRefHash", regKey1),
+			)
+	case "allRepos":
+		p = repos
+	default:
+		return nil, nil, errors.New("this query is not implemented")
+	}
+	return p, opts, nil
 }
 
 var count int64
@@ -76,7 +101,7 @@ func printRow(row *util.Row) error {
 	return nil
 }
 
-func flipKey(i int) gio.Mapper {
+func columnToKey(i int) gio.Mapper {
 	return func(x []interface{}) error {
 		row := append([]interface{}{x[i]}, x[:i]...)
 		row = append(row, x[i+1:]...)

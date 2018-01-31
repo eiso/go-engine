@@ -106,10 +106,7 @@ func (s *shardInfo) ReadSplit() error {
 		} else if err != nil {
 			return errors.Wrap(err, "could not read")
 		}
-		// TODO: why would this row be nil?
-		if row == nil {
-			continue
-		}
+
 		// Writing to stdout is how agents communicate.
 		if err := row.WriteTo(os.Stdout); err != nil {
 			return errors.Wrap(err, "could not write row to stdout")
