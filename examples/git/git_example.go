@@ -62,7 +62,7 @@ func main() {
 	}
 	p.Run(opts...)
 
-	log.Printf("processed %d rows successfully in %v\n", count, time.Since(start))
+	log.Printf("\nprocessed %d rows successfully in %v\n", count, time.Since(start))
 }
 
 var count int64
@@ -84,36 +84,38 @@ func flipKey(i int) gio.Mapper {
 	}
 }
 
-func readBlob(x []interface{}) error {
-	repoPath := gio.ToString(x[1])
-	blobHash := plumbing.NewHash(gio.ToString(x[5]))
+func readBlob(repoPathIdx, blobHashIdx int) gio.Mapper {
+	return func(x []interface{}) error {
+		repoPath := gio.ToString(x[repoPathIdx])
+		blobHash := plumbing.NewHash(gio.ToString(x[blobHashIdx]))
 
-	if blobHash.IsZero() {
-		return gio.Emit(x[0], x[1], x[2], x[3], x[4], x[5], nil)
+		if blobHash.IsZero() {
+			return gio.Emit(x[:len(x)+1]...)
+		}
+
+		r, err := gogit.PlainOpen(repoPath)
+		if err != nil {
+			return errors.Wrapf(err, "could not open repo at %s", repoPath)
+		}
+
+		blob, err := r.BlobObject(blobHash)
+		if err != nil {
+			return errors.Wrapf(err, "could not retrieve blob object with hash %s", blobHash)
+		}
+
+		reader, err := blob.Reader()
+		if err != nil {
+			return errors.Wrapf(err, "could not read blob with hash %s", blobHash)
+		}
+
+		contents, err := ioutil.ReadAll(reader)
+		reader.Close()
+		if err != nil {
+			return errors.Wrapf(err, "could not fully read blob with hash %s", blobHash)
+		}
+
+		return gio.Emit(append(x, contents)...)
 	}
-
-	r, err := gogit.PlainOpen(repoPath)
-	if err != nil {
-		return errors.Wrapf(err, "could not open repo at %s", repoPath)
-	}
-
-	blob, err := r.BlobObject(blobHash)
-	if err != nil {
-		return errors.Wrapf(err, "could not retrieve blob object with hash %s", blobHash)
-	}
-
-	reader, err := blob.Reader()
-	if err != nil {
-		return errors.Wrapf(err, "could not read blob with hash %s", blobHash)
-	}
-
-	contents, err := ioutil.ReadAll(reader)
-	reader.Close()
-	if err != nil {
-		return errors.Wrapf(err, "could not fully read blob with hash %s", blobHash)
-	}
-
-	return gio.Emit(x[0], x[1], x[2], x[3], x[4], x[5], contents)
 }
 
 func classifyLanguage(filenameIdx, contentIdx int) gio.Mapper {
