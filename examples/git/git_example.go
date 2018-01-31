@@ -4,153 +4,123 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
+	"time"
 
 	"github.com/chrislusf/gleam/distributed"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/gio"
 	"github.com/chrislusf/gleam/plugins/git"
 	"github.com/chrislusf/gleam/util"
+	"github.com/pkg/errors"
 
-	"gopkg.in/bblfsh/client-go.v2"
-	protocol "gopkg.in/bblfsh/sdk.v1/protocol"
 	enry "gopkg.in/src-d/enry.v1"
 	gogit "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
-var (
-	isDistributed   = flag.Bool("distributed", false, "run in distributed or not")
-	isDockerCluster = flag.Bool("onDocker", false, "run in docker cluster")
-
-	regKeyRefHash    = gio.RegisterMapper(flipKey(3))
-	regKeyCommitHash = gio.RegisterMapper(flipKey(1))
-
-	regReadBlob         = gio.RegisterMapper(readBlob)
-	regClassifyLanguage = gio.RegisterMapper(classifyLanguage(2, 6))
-	regExtractUAST      = gio.RegisterMapper(extractUAST)
-)
-
 func main() {
+	var (
+		isDistributed   = flag.Bool("distributed", false, "run in distributed or not")
+		isDockerCluster = flag.Bool("onDocker", false, "run in docker cluster")
+
+		regKeyRefHash    = gio.RegisterMapper(flipKey(3))
+		regKeyCommitHash = gio.RegisterMapper(flipKey(1))
+	)
 	gio.Init()
 
+	var path = "."
+	if args := flag.Args(); len(args) > 0 {
+		path = args[0]
+	}
+	log.Printf("analyzing %s", path)
+
+	start := time.Now()
+
 	f := flow.New("Git pipeline")
-	path := "/home/mthek/projects/enginerepos/**"
 
 	repos := f.Read(git.Repositories(path, 1))
-	refs := f.Read(git.References(path, 1)) //.Pipe("grep", "grep -e 'refs/heads/master'")
+	refs := f.Read(git.References(path, 1))
 	commits := f.Read(git.Commits(path, 1)).
 		Map("KeyCommitHash", regKeyCommitHash)
 	trees := f.Read(git.Trees(path, false, 1)).
 		Map("KeyTreeHash", regKeyCommitHash)
 
-	joinA := refs.JoinByKey("Refs & Repos", repos).
-		Map("KeyRefHash", regKeyRefHash)
-	joinB := joinA.LeftOuterJoinByKey("Refs & Commits", commits)
-	joinC := joinB.JoinByKey("Trees & Refs & Commits", trees)
+	p := refs.
+		JoinByKey("Refs & Repos", repos).
+		Map("KeyRefHash", regKeyRefHash).
+		LeftOuterJoinByKey("Refs & Commits", commits).
+		JoinByKey("Trees & Refs & Commits", trees).
+		OutputRow(printRow)
 
-	p := joinC.OutputRow(func(row *util.Row) error {
-		fmt.Printf("\n\n%v\t", row.K[0])
-		i := 0
-		for _, v := range row.V {
-			fmt.Printf("%v\t", v)
-			i++
-		}
-		return nil
-	})
-
-	if *isDistributed {
-		p.Run(distributed.Option())
-	} else if *isDockerCluster {
-		p.Run(distributed.Option().SetMaster("master:45326"))
-	} else {
-		p.Run()
+	var opts []flow.FlowOption
+	switch {
+	case *isDistributed:
+		opts = append(opts, distributed.Option())
+	case *isDockerCluster:
+		opts = append(opts, distributed.Option().SetMaster("master:45326"))
 	}
+	p.Run(opts...)
+
+	log.Printf("processed %d rows successfully in %v\n", count, time.Since(start))
 }
 
-func flipKey(newKeyIdx int) gio.Mapper {
+var count int64
+
+func printRow(row *util.Row) error {
+	fmt.Printf("\n\n%v\t", row.K[0])
+	count++
+	for _, v := range row.V {
+		fmt.Printf("%v\t", v)
+	}
+	return nil
+}
+
+func flipKey(i int) gio.Mapper {
 	return func(x []interface{}) error {
-		newKey := make([]interface{}, 1)
-		newKey[0] = x[newKeyIdx]
-		row := x[:newKeyIdx]
-		if len(x) > newKeyIdx+1 {
-			row = append(row, x[newKeyIdx+1:]...)
-		}
-		row = append(newKey, row...)
-		gio.Emit(row...)
-		return nil
+		row := append([]interface{}{x[i]}, x[:i]...)
+		row = append(row, x[i+1:]...)
+		return gio.Emit(row...)
 	}
 }
 
-//TODO: Update to new index approach
 func readBlob(x []interface{}) error {
 	repoPath := gio.ToString(x[1])
 	blobHash := plumbing.NewHash(gio.ToString(x[5]))
-	contents := []byte("")
 
-	if !blobHash.IsZero() {
-		r, err := gogit.PlainOpen(repoPath)
-		if err != nil {
-			return err
-		}
-
-		blob, err := r.BlobObject(blobHash)
-		if err != nil {
-			return err
-		}
-
-		reader, err := blob.Reader()
-		if err != nil {
-			return err
-		}
-
-		contents, err = ioutil.ReadAll(reader)
-		if err != nil {
-			return err
-		}
+	if blobHash.IsZero() {
+		return gio.Emit(x[0], x[1], x[2], x[3], x[4], x[5], nil)
 	}
 
-	gio.Emit(x[0], x[1], x[2], x[3], x[4], x[5], contents)
-	return nil
+	r, err := gogit.PlainOpen(repoPath)
+	if err != nil {
+		return errors.Wrapf(err, "could not open repo at %s", repoPath)
+	}
+
+	blob, err := r.BlobObject(blobHash)
+	if err != nil {
+		return errors.Wrapf(err, "could not retrieve blob object with hash %s", blobHash)
+	}
+
+	reader, err := blob.Reader()
+	if err != nil {
+		return errors.Wrapf(err, "could not read blob with hash %s", blobHash)
+	}
+
+	contents, err := ioutil.ReadAll(reader)
+	reader.Close()
+	if err != nil {
+		return errors.Wrapf(err, "could not fully read blob with hash %s", blobHash)
+	}
+
+	return gio.Emit(x[0], x[1], x[2], x[3], x[4], x[5], contents)
 }
 
-func classifyLanguage(fileNameIdx int, contentIdx int) gio.Mapper {
+func classifyLanguage(filenameIdx, contentIdx int) gio.Mapper {
 	return func(x []interface{}) error {
-		filename := gio.ToString(x[fileNameIdx])
-		content := x[contentIdx].([]byte)
+		filename := gio.ToString(x[filenameIdx])
+		content := gio.ToBytes(x[contentIdx])
 		lang := enry.GetLanguage(filename, content)
-		gio.Emit(append(x, lang)...)
-		return nil
+		return gio.Emit(append(x, lang)...)
 	}
-}
-
-//TODO: Update to new index approach
-func extractUAST(x []interface{}) error {
-	client, err := bblfsh.NewClient("0.0.0.0:9432")
-	if err != nil {
-		panic(err)
-	}
-
-	blob := gio.ToString(x[4])
-
-	res, err := client.NewParseRequest().Language("python").Content(blob).Do()
-	if err != nil {
-		panic(err)
-	}
-
-	if res.Response.Status == protocol.Fatal {
-		res.Language = ""
-	}
-
-	gio.Emit(x[0], x[1], x[2], x[3], x[4], x[5], res.Language)
-	return nil
-}
-
-func truncateString(v interface{}, num int) interface{} {
-	b := v
-	if v, ok := v.(string); ok {
-		if len(v) > num {
-			b = v[0:num]
-		}
-	}
-	return b
 }

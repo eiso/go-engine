@@ -4,36 +4,35 @@ import (
 	"io"
 
 	"github.com/chrislusf/gleam/util"
+	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
 )
 
-type RepositoriesGitReader struct {
+type Reader struct {
 	repositoryID string
 	repos        *reposIter
 }
 
-func New(r *git.Repository, path string) *RepositoriesGitReader {
-
-	return &RepositoriesGitReader{
-		repos:        newReposIter(r),
+func NewReader(repo *git.Repository, path string) (*Reader, error) {
+	return &Reader{
+		repos:        &reposIter{repos: []*git.Repository{repo}},
 		repositoryID: path,
-	}
+	}, nil
 }
 
-func (r *RepositoriesGitReader) ReadHeader() (fieldNames []string, err error) {
-	fieldNames = []string{
+func (r *Reader) ReadHeader() (fieldNames []string, err error) {
+	return []string{
 		"repositoryID",
 		"repositoryURLs",
 		"headRef",
-	}
-	return fieldNames, nil
+	}, nil
 }
 
 //TODO: add is_fork
-func (r *RepositoriesGitReader) Read() (row *util.Row, err error) {
-
+func (r *Reader) Read() (*util.Row, error) {
 	repository, err := r.repos.Next()
 	if err != nil {
+		// do not wrap this error, as it could be an io.EOF.
 		return nil, err
 	}
 
@@ -41,18 +40,17 @@ func (r *RepositoriesGitReader) Read() (row *util.Row, err error) {
 	// for repositories with many remotes, right now it only goes on [0]
 	listRemotes, err := repository.Remotes()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "could not list remotes")
 	}
 
 	var remoteURLs []string
-
 	if len(listRemotes) > 0 {
 		remoteURLs = listRemotes[0].Config().URLs
 	}
 
 	head, err := repository.Head()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "could not get head from repository")
 	}
 
 	return util.NewRow(util.Now(), r.repositoryID, head.Hash().String(), remoteURLs), nil
@@ -61,10 +59,6 @@ func (r *RepositoriesGitReader) Read() (row *util.Row, err error) {
 type reposIter struct {
 	repos []*git.Repository
 	pos   int
-}
-
-func newReposIter(repos ...*git.Repository) *reposIter {
-	return &reposIter{repos: repos}
 }
 
 func (iter *reposIter) Next() (*git.Repository, error) {

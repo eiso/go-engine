@@ -1,15 +1,16 @@
 package trees
 
 import (
-	"fmt"
+	"io"
 
 	"github.com/chrislusf/gleam/util"
+	"github.com/pkg/errors"
 	"github.com/src-d/go-git/plumbing/storer"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
-type TreesGitReader struct {
+type Reader struct {
 	repositoryID       string
 	repo               *git.Repository
 	refsIter           storer.ReferenceIter
@@ -19,48 +20,49 @@ type TreesGitReader struct {
 	flag               bool
 }
 
-func New(r *git.Repository, path string, flag bool) *TreesGitReader {
-	refsIter, _ := r.References()
+func NewReader(r *git.Repository, path string, flag bool) (*Reader, error) {
+	refsIter, err := r.References()
+	if err != nil {
+		return nil, errors.Wrap(err, "could not fetch references from repository")
+	}
 
-	return &TreesGitReader{
+	return &Reader{
 		repositoryID: path,
 		repo:         r,
 		refsIter:     refsIter,
 		flag:         flag,
-	}
+	}, nil
 }
 
-func (r *TreesGitReader) ReadHeader() (fieldNames []string, err error) {
-	fieldNames = []string{
+func (r *Reader) ReadHeader() ([]string, error) {
+	return []string{
 		"repositoryID",
 		"blobHash",
 		"fileName",
 		"treeHash",
 		"blobSize",
 		"isBinary",
-	}
-
-	return fieldNames, nil
+	}, nil
 }
 
-func (r *TreesGitReader) Read() (row *util.Row, err error) {
+func (r *Reader) Read() (*util.Row, error) {
 	if r.fileIter == nil {
-
 		ref, err := r.refsIter.Next()
 		if err != nil {
-			return nil, fmt.Errorf("end of refsIter")
+			// do not wrap this error, as it could be an io.EOF.
+			return nil, err
 		}
 		r.refHash = ref.Hash().String()
 
 		commit, err := r.repo.CommitObject(ref.Hash())
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "could not fetch commit object")
 		}
 
 		treeHash := commit.TreeHash
 		tree, err := r.repo.TreeObject(treeHash)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "could not fetch tree object")
 		}
 		r.treeHashFromCommit = treeHash.String()
 
@@ -68,12 +70,17 @@ func (r *TreesGitReader) Read() (row *util.Row, err error) {
 	}
 
 	file, err := r.fileIter.Next()
-	if err != nil {
+	if err == io.EOF {
 		r.fileIter = nil
 		return nil, nil
+	} else if err != nil {
+		return nil, errors.Wrap(err, "could not get next file")
 	}
 
-	binary, _ := file.IsBinary()
+	binary, err := file.IsBinary()
+	if err != nil {
+		return nil, errors.Wrap(err, "could not check whether it's binary")
+	}
 
 	return util.NewRow(util.Now(),
 		r.repositoryID,

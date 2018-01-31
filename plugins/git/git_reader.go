@@ -3,6 +3,7 @@ package git
 import (
 	"fmt"
 
+	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/plugins/git/blobs"
 	"github.com/chrislusf/gleam/plugins/git/commits"
 	"github.com/chrislusf/gleam/plugins/git/references"
@@ -12,39 +13,39 @@ import (
 	git "gopkg.in/src-d/go-git.v4"
 )
 
-type GitReader interface {
-	Read() (row *util.Row, err error)
-	ReadHeader() (fieldNames []string, err error)
+func Repositories(path string, partitionCount int) flow.Sourcer {
+	return newGitSource("repositories", path, partitionCount)
+}
+func References(path string, partitionCount int) flow.Sourcer {
+	return newGitSource("references", path, partitionCount)
+}
+func Commits(path string, partitionCount int) flow.Sourcer {
+	return newGitSource("commits", path, partitionCount)
+}
+func Trees(path string, flag bool, partitionCount int) flow.Sourcer {
+	return newGitSourceOptions("trees", path, flag, partitionCount)
+}
+func Blobs(path string, partitionCount int) flow.Sourcer {
+	return newGitSource("blobs", path, partitionCount)
 }
 
-func Repositories(fsPath string, partitionCount int) *GitSource {
-	return newGitSource("repositories", fsPath, partitionCount)
-}
-func References(fsPath string, partitionCount int) *GitSource {
-	return newGitSource("references", fsPath, partitionCount)
-}
-func Commits(fsPath string, partitionCount int) *GitSource {
-	return newGitSource("commits", fsPath, partitionCount)
-}
-func Trees(fsPath string, flag bool, partitionCount int) *GitSource {
-	return newGitSourceOptions("trees", fsPath, flag, partitionCount)
-}
-func Blobs(fsPath string, partitionCount int) *GitSource {
-	return newGitSource("blobs", fsPath, partitionCount)
+type reader interface {
+	Read() (*util.Row, error)
+	ReadHeader() ([]string, error)
 }
 
-func (ds *GitShardInfo) NewReader(r *git.Repository, path string, flag bool) (GitReader, error) {
-	switch ds.GitDataType {
+func (ds *shardInfo) NewReader(r *git.Repository, path string, flag bool) (reader, error) {
+	switch ds.DataType {
 	case "repositories":
-		return repositories.New(r, path), nil
+		return repositories.NewReader(r, path)
 	case "references":
-		return references.New(r, path), nil
+		return references.NewReader(r, path)
 	case "commits":
-		return commits.New(r, path), nil
+		return commits.NewReader(r, path)
 	case "trees":
-		return trees.New(r, path, flag), nil
+		return trees.NewReader(r, path, flag)
 	case "blobs":
-		return blobs.New(r, path), nil
+		return blobs.NewReader(r, path)
 	}
-	return nil, fmt.Errorf("Git data source '%s' is not defined.", ds.GitDataType)
+	return nil, fmt.Errorf("unkown data type %q", ds.DataType)
 }

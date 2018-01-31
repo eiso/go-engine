@@ -2,36 +2,37 @@ package blobs
 
 import (
 	"github.com/chrislusf/gleam/util"
+	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
-type BlobsGitReader struct {
+type Reader struct {
 	repositoryID string
 	blobs        *object.BlobIter
 }
 
-func New(r *git.Repository, path string) *BlobsGitReader {
+func NewReader(repo *git.Repository, path string) (*Reader, error) {
+	blobs, err := repo.BlobObjects()
+	if err != nil {
+		return nil, errors.Wrap(err, "could not fetch blob objects for repository")
+	}
 
-	blobs, _ := r.BlobObjects()
-
-	return &BlobsGitReader{
+	return &Reader{
 		repositoryID: path,
 		blobs:        blobs,
-	}
+	}, nil
 }
 
-func (r *BlobsGitReader) ReadHeader() (fieldNames []string, err error) {
-	fieldNames = []string{
+func (r *Reader) ReadHeader() ([]string, error) {
+	return []string{
 		"repositoryID",
 		"blobHash",
 		"blobSize",
-	}
-	return fieldNames, nil
+	}, nil
 }
 
-func (r *BlobsGitReader) Read() (row *util.Row, err error) {
-
+func (r *Reader) Read() (*util.Row, error) {
 	blob, err := r.blobs.Next()
 	if err != nil {
 		return nil, err
