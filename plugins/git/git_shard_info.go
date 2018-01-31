@@ -102,9 +102,9 @@ func (s *shardInfo) ReadSplit() error {
 	for {
 		row, err := reader.Read()
 		if err == io.EOF {
-			continue
+			return nil
 		} else if err != nil {
-			break
+			return errors.Wrap(err, "could not get next file")
 		}
 
 		// Writing to stdout is how agents communicate.
