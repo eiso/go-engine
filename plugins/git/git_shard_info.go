@@ -102,9 +102,9 @@ func (s *shardInfo) ReadSplit() error {
 	for {
 		row, err := reader.Read()
 		if err == io.EOF {
-			return nil
+			continue
 		} else if err != nil {
-			return errors.Wrap(err, "could not read")
+			break
 		}
 
 		// Writing to stdout is how agents communicate.
@@ -112,6 +112,7 @@ func (s *shardInfo) ReadSplit() error {
 			return errors.Wrap(err, "could not write row to stdout")
 		}
 	}
+	return nil
 }
 
 func (s *shardInfo) decode(b []byte) error {
