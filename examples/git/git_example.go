@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"time"
 
 	"github.com/chrislusf/gleam/distributed"
@@ -38,7 +39,8 @@ func main() {
 
 	p, opts, err := queryExample(path, *query)
 	if err != nil {
-		fmt.Printf("could not load query: %s", err)
+		fmt.Printf("could not load query: %s \n", err)
+		os.Exit(0)
 	}
 
 	p.OutputRow(printRow)
@@ -71,7 +73,7 @@ func queryExample(path, query string) (*flow.Dataset, []flow.FlowOption, error) 
 	trees := f.Read(git.Trees(path, false, 1))
 
 	switch query {
-	case "allFilesAcrossAllBranches":
+	case "treesJoinRefs":
 		p = trees.
 			Map("KeyRefHash", regKey1).
 			JoinByKey("Trees & References",

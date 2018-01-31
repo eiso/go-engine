@@ -13,7 +13,6 @@ import (
 	"github.com/chrislusf/gleam/util"
 	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
 type shardInfo struct {
@@ -84,19 +83,6 @@ func (s *shardInfo) ReadSplit() error {
 		if _, err := reader.ReadHeader(); err != nil {
 			return errors.Wrap(err, "could not read headers")
 		}
-	}
-
-	if s.DataType == "references" {
-		refs, err := repo.References()
-		if err != nil {
-			return errors.Wrap(err, "could not read references")
-		}
-		return refs.ForEach(func(ref *plumbing.Reference) error {
-			if ref.Hash().IsZero() {
-				return nil
-			}
-			return getRefChildren(s.RepoPath, ref.Hash().String(), ref.Name().String())
-		})
 	}
 
 	for {
