@@ -21,6 +21,7 @@ import (
 
 func main() {
 	var (
+		query           = flag.String("query", "", "name the query you want to run")
 		isDistributed   = flag.Bool("distributed", false, "run in distributed or not")
 		isDockerCluster = flag.Bool("onDocker", false, "run in docker cluster")
 	)
@@ -35,7 +36,7 @@ func main() {
 
 	start := time.Now()
 
-	p, opts, err := queryExample(path, "allFilesAcrossAllBranches")
+	p, opts, err := queryExample(path, *query)
 	if err != nil {
 		fmt.Printf("could not load query: %s", err)
 	}
@@ -82,8 +83,14 @@ func queryExample(path, query string) (*flow.Dataset, []flow.FlowOption, error) 
 			JoinByKey("Commits & References",
 				refs.Map("KeyRefHash", regKey1),
 			)
-	case "allRepos":
+	case "repos":
 		p = repos
+	case "refs":
+		p = refs
+	case "commits":
+		p = commits
+	case "trees":
+		p = trees
 	default:
 		return nil, nil, errors.New("this query is not implemented")
 	}
