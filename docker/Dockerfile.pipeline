@@ -1,0 +1,17 @@
+FROM alpine:latest
+MAINTAINER Eiso Kant <eiso@sourced.tech>
+
+RUN mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
+RUN apk --update add git openssh curl
+
+VOLUME /data
+
+WORKDIR /data
+RUN git clone https://github.com/apache/spark
+
+COPY pipeline /usr/bin/
+COPY entrypoint_pipeline.sh /entrypoint_pipeline.sh
+
+RUN chmod +x /entrypoint_pipeline.sh
+
+ENTRYPOINT ["/entrypoint_pipeline.sh"]

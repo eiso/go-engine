@@ -22,11 +22,11 @@ spec:
     spec:
       containers:
       - name: agent
-        image: chrislusf/gleam
+        image: eisokant/gleam
         resources:
           limits:
             memory: "2Gi"
-            cpu: "0.5"
+            cpu: "0.3"
         args:
           - "agent"
           - "--memory=2048 --master=master:45326"
