@@ -2,3 +2,6 @@
 .DS_Store
 
 .idea/*
+docker/pipeline
+docker/pipeline-darwin
+docker/gleam

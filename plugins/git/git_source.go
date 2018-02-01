@@ -100,7 +100,7 @@ func (s *source) gitRepos(folder string, out io.Writer, stats *pb.InstructionSta
 	}
 
 	for _, vf := range virtualFiles {
-		if !filesystem.IsDir(vf.Location) || strings.Contains(vf.Location, ".") {
+		if !filesystem.IsDir(vf.Location) {
 			continue
 		}
 
