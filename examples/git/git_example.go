@@ -102,11 +102,11 @@ func queryExample(path, query string) (*flow.Dataset, []flow.FlowOption, error) 
 var count int64
 
 func printRow(row *util.Row) error {
-	fmt.Printf("\n\n%v\t", row.K[0])
+	//	fmt.Printf("\n\n%v\t", row.K[0])
 	count++
-	for _, v := range row.V {
-		fmt.Printf("%v\t", v)
-	}
+	//	for _, v := range row.V {
+	//		fmt.Printf("%v\t", v)
+	//	}
 	return nil
 }
 

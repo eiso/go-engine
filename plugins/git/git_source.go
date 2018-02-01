@@ -100,12 +100,16 @@ func (s *source) gitRepos(folder string, out io.Writer, stats *pb.InstructionSta
 	}
 
 	for _, vf := range virtualFiles {
-		if !filesystem.IsDir(vf.Location) {
+		if !filesystem.IsDir(vf.Location) || strings.Contains(vf.Location, ".") {
 			continue
 		}
 
 		if !s.isRepo(vf.Location) {
-			return s.gitRepos(vf.Location, out, stats)
+			err = s.gitRepos(vf.Location, out, stats)
+			if err != nil {
+				return err
+			}
+			continue
 		}
 
 		stats.OutputCounter++
@@ -116,6 +120,7 @@ func (s *source) gitRepos(folder string, out io.Writer, stats *pb.InstructionSta
 			Fields:    s.fields,
 			Optimize:  s.optimize,
 		}
+
 		b, err := s.encode()
 		if err != nil {
 			return errors.Wrap(err, "could not encode shard info")
@@ -129,5 +134,10 @@ func (s *source) gitRepos(folder string, out io.Writer, stats *pb.InstructionSta
 }
 
 func (s *source) isRepo(path string) bool {
-	return filesystem.IsDir(filepath.Join(path, ".git"))
+	p := filepath.Join(path, ".git")
+	_, err := filesystem.Open(p)
+	if err != nil {
+		return false
+	}
+	return true
 }
