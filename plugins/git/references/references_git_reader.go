@@ -2,7 +2,6 @@ package references
 
 import (
 	"io"
-	"strconv"
 
 	"github.com/chrislusf/gleam/util"
 	"github.com/pkg/errors"
@@ -20,7 +19,7 @@ type Reader struct {
 
 	refCommitHash string
 	refName       string
-	refIsRemote   string
+	refIsRemote   bool
 }
 
 func NewReader(repo *git.Repository, path string) (*Reader, error) {
@@ -75,7 +74,7 @@ func (r *Reader) Read() (*util.Row, error) {
 
 		r.refCommitHash = refCommitHash.String()
 		r.refName = ref.Name().String()
-		r.refIsRemote = strconv.FormatBool(ref.Name().IsRemote())
+		r.refIsRemote = ref.Name().IsRemote()
 	}
 
 	commit, err := r.commitsIter.Next()
