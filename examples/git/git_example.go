@@ -70,7 +70,7 @@ func queryExample(path, query string) (*flow.Dataset, []flow.FlowOption, error) 
 	repos := f.Read(git.Repositories(path, 1))
 	refs := f.Read(git.References(path, 1))
 	commits := f.Read(git.Commits(path, 1))
-	trees := f.Read(git.Trees(path, false, 1))
+	trees := f.Read(git.Trees(path, 1))
 
 	switch query {
 	case "treesJoinRefs":
