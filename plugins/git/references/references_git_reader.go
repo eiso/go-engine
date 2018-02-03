@@ -15,11 +15,18 @@ type Reader struct {
 	repositoryID string
 	repo         *git.Repository
 	refs         storer.ReferenceIter
+	filtered     refsIter
 	commitsIter  object.CommitIter
 
 	refCommitHash string
 	refName       string
 	refIsRemote   bool
+	options       *Options
+}
+
+type Options struct {
+	filter  map[int][]string
+	reverse bool
 }
 
 func NewReader(repo *git.Repository, path string) (*Reader, error) {
@@ -34,6 +41,59 @@ func NewReader(repo *git.Repository, path string) (*Reader, error) {
 	}, nil
 }
 
+func NewReader2(repo *git.Repository, path string, options *Options) (*Reader, error) {
+
+	reader := &Reader{
+		repositoryID: path,
+		repo:         repo,
+		options:      options,
+	}
+
+	if options.filter != nil {
+		var refs refsIter
+		for _, name := range options.filter[2] {
+			ref, err := repo.Storer.Reference(plumbing.ReferenceName(name))
+			if err != nil {
+				// continue when reference can't be found
+				continue
+			}
+			refs.refs = append(refs.refs, ref)
+		}
+		reader.filtered = refs
+		return reader, nil
+	}
+
+	refs, err := repo.References()
+	if err != nil {
+		return nil, errors.Wrap(err, "could not fetch references from repository")
+	}
+	reader.refs = refs
+	return reader, nil
+}
+
+// should be creating a storer.ReferenceIter
+// tried but failed so far
+type refsIter struct {
+	refs []*plumbing.Reference
+	pos  int
+}
+
+func (iter *refsIter) Next() (*plumbing.Reference, error) {
+	if iter.pos >= len(iter.refs) {
+		return nil, io.EOF
+	}
+	ref := iter.refs[iter.pos]
+	iter.pos++
+	return ref, nil
+}
+
+func NewOptions(a map[int][]string, b bool) (*Options, error) {
+	return &Options{
+		filter:  a,
+		reverse: b,
+	}, nil
+}
+
 func (r *Reader) ReadHeader() ([]string, error) {
 	return []string{
 		"repositoryID",
@@ -45,10 +105,21 @@ func (r *Reader) ReadHeader() ([]string, error) {
 }
 
 func (r *Reader) Read() (*util.Row, error) {
+
 	if r.commitsIter == nil {
-		ref, err := r.refs.Next()
-		if err != nil {
-			return nil, err
+		var ref *plumbing.Reference
+		var err error
+
+		if r.filtered.refs != nil {
+			ref, err = r.filtered.Next()
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			ref, err = r.refs.Next()
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		// Get correct commit hash

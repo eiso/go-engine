@@ -17,12 +17,12 @@ import (
 
 type shardInfo struct {
 	// these fields are exported so gob encoding can see them.
-	Config    map[string]string
-	RepoPath  string
-	DataType  string
-	HasHeader bool
-	Fields    []string
-	Options   map[string]bool
+	Config       map[string]string
+	RepoPath     string
+	DataType     string
+	HasHeader    bool
+	Fields       []string
+	NestedSource nestedSource
 }
 
 var registeredMapperReadShard = gio.RegisterMapper(readShard)
@@ -79,14 +79,33 @@ func (s *shardInfo) ReadSplit() error {
 	if err != nil {
 		return errors.Wrapf(err, "could not read repository %s", s.RepoPath)
 	}
+
+	var r Reader
+
+	for source, options := range s.NestedSource {
+		log.Printf("%s: %v\n", source, options)
+
+		switch source {
+		case "references":
+			r, err = s.NewReader2(repo, s.RepoPath, options)
+			if err != nil {
+				return errors.Wrap(err, "could not read references")
+			}
+		case "commits":
+		case "trees":
+		}
+	}
+
 	if s.HasHeader {
 		if _, err := reader.ReadHeader(); err != nil {
 			return errors.Wrap(err, "could not read headers")
 		}
 	}
 
+	log.Printf("\n%v", r)
+
 	for {
-		row, err := reader.Read()
+		row, err := r.Read()
 		if err == io.EOF {
 			return nil
 		} else if err != nil {

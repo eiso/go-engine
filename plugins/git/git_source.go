@@ -22,7 +22,7 @@ type GitSource struct {
 	hasHeader      bool
 	partitionCount int
 	dataType       string
-	options        map[string]bool
+	nestedSource   nestedSource
 
 	prefix string
 }
@@ -32,6 +32,15 @@ type pipeline interface {
 	References() *GitSource
 	Trees() *GitSource
 	flow.Sourcer
+}
+
+type dataType string
+
+type nestedSource map[dataType]Options
+
+type Options struct {
+	Filter  map[int][]string
+	Reverse bool
 }
 
 // New creates a GitSource based on a path.
@@ -47,22 +56,22 @@ func newGitSource(dataType, fsPath string, partitionCount int) *GitSource {
 		fileBaseName:   base,
 		path:           fsPath,
 		hasWildcard:    strings.Contains(base, "**"),
-		options:        make(map[string]bool),
+		nestedSource:   nestedSource{},
 	}
 }
 
-func (s *GitSource) Commits() *GitSource {
-	s.options["commits"] = true
+func (s *GitSource) Commits(options Options) *GitSource {
+	s.nestedSource["commits"] = options
 	return s
 }
 
-func (s *GitSource) References() *GitSource {
-	s.options["references"] = true
+func (s *GitSource) References(options Options) *GitSource {
+	s.nestedSource["references"] = options
 	return s
 }
 
-func (s *GitSource) Trees() *GitSource {
-	s.options["trees"] = true
+func (s *GitSource) Trees(options Options) *GitSource {
+	s.nestedSource["trees"] = options
 	return s
 }
 
@@ -92,10 +101,10 @@ func (s *GitSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 
 		stats.OutputCounter++
 		s := &shardInfo{
-			RepoPath:  s.path,
-			DataType:  s.dataType,
-			HasHeader: s.hasHeader,
-			Options:   s.options,
+			RepoPath:     s.path,
+			DataType:     s.dataType,
+			HasHeader:    s.hasHeader,
+			NestedSource: s.nestedSource,
 		}
 		b, err := s.encode()
 		if err != nil {
@@ -128,10 +137,10 @@ func (s *GitSource) gitRepos(folder string, out io.Writer, stats *pb.Instruction
 
 		stats.OutputCounter++
 		s := &shardInfo{
-			RepoPath:  vf.Location,
-			DataType:  s.dataType,
-			HasHeader: s.hasHeader,
-			Options:   s.options,
+			RepoPath:     vf.Location,
+			DataType:     s.dataType,
+			HasHeader:    s.hasHeader,
+			NestedSource: s.nestedSource,
 		}
 
 		b, err := s.encode()
