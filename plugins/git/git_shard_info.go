@@ -22,7 +22,7 @@ type shardInfo struct {
 	DataType  string
 	HasHeader bool
 	Fields    []string
-	Optimize  bool
+	Options   map[string]bool
 }
 
 var registeredMapperReadShard = gio.RegisterMapper(readShard)
@@ -75,7 +75,7 @@ func (s *shardInfo) ReadSplit() error {
 		return errors.Wrap(err, "could not open repo")
 	}
 
-	reader, err := s.NewReader(repo, s.RepoPath, s.Optimize)
+	reader, err := s.NewReader(repo, s.RepoPath)
 	if err != nil {
 		return errors.Wrapf(err, "could not read repository %s", s.RepoPath)
 	}

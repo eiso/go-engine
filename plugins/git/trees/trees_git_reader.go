@@ -17,10 +17,9 @@ type Reader struct {
 	fileIter           *object.FileIter
 	refHash            string
 	treeHashFromCommit string
-	flag               bool
 }
 
-func NewReader(r *git.Repository, path string, flag bool) (*Reader, error) {
+func NewReader(r *git.Repository, path string) (*Reader, error) {
 	refsIter, err := r.References()
 	if err != nil {
 		return nil, errors.Wrap(err, "could not fetch references from repository")
@@ -30,7 +29,6 @@ func NewReader(r *git.Repository, path string, flag bool) (*Reader, error) {
 		repositoryID: path,
 		repo:         r,
 		refsIter:     refsIter,
-		flag:         flag,
 	}, nil
 }
 
