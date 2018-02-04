@@ -37,6 +37,10 @@ func main() {
 
 	start := time.Now()
 
+	if *query == "" {
+		fmt.Print("please provide a query e.g. --query=test")
+		os.Exit(0)
+	}
 	p, opts, err := queryExample(path, *query)
 	if err != nil {
 		fmt.Printf("could not load query: %s \n", err)
@@ -64,7 +68,7 @@ var (
 )
 
 func queryExample(path, query string) (*flow.Dataset, []flow.FlowOption, error) {
-	f := flow.New(fmt.Sprintf("Pipeline: %s", query))
+	f := flow.New(fmt.Sprintf("Driver: %s", query))
 	var p *flow.Dataset
 
 	switch query {

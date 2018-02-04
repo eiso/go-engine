@@ -9,6 +9,7 @@ EXPOSE 45326
 VOLUME /data
 
 COPY gleam /usr/bin/
+COPY driver /usr/bin/
 COPY entrypoint.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh
