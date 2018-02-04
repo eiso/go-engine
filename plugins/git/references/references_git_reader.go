@@ -148,9 +148,16 @@ func (r *Reader) Read() (*util.Row, error) {
 		refHash = commit.Hash
 	}
 
+	commit, err := r.repo.CommitObject(refHash)
+	if err != nil {
+		return nil, err
+	}
+	treeHash := commit.TreeHash
+
 	row := util.NewRow(util.Now(),
 		r.repositoryID,
 		refHash,
+		treeHash,
 		ref.Name().String(),
 		ref.Name().IsRemote(),
 	)

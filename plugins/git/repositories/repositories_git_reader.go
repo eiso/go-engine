@@ -72,7 +72,7 @@ func (r *Reader) Read() (*util.Row, error) {
 		return nil, errors.Wrap(err, "could not get head from repository")
 	}
 
-	return util.NewRow(util.Now(), r.repositoryID, "JACK", head.Hash().String(), remoteURLs), nil
+	return util.NewRow(util.Now(), r.repositoryID, head.Hash().String(), remoteURLs), nil
 }
 
 type reposIter struct {

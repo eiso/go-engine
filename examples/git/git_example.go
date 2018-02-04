@@ -75,13 +75,11 @@ func queryExample(path, query string) (*flow.Dataset, []flow.FlowOption, error) 
 		refOptions := git.Options{
 			Filter: filters,
 		}
-		commitOptions := git.Options{}
-		treeOptions := git.Options{}
 
 		p = f.Read(git.Repositories(path, 1).
 			References(refOptions).
-			Commits(commitOptions).
-			Trees(treeOptions))
+			//Commits(git.Options{}).
+			Trees(git.Options{}))
 
 	default:
 		return nil, nil, errors.New("this query is not implemented")

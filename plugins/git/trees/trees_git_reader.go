@@ -68,26 +68,44 @@ func (r *Reader) Read() (*util.Row, error) {
 		}
 	}
 
-	if refReader, ok := r.readers["references"]; ok {
-		row, err := refReader.Read()
-		if err != io.EOF && err != nil {
-			return nil, err
-		}
-		if row != nil {
-			r.references = row
+	var objectHashKey int
+	var objectSource string
+
+	_, refsExists := r.readers["references"]
+	_, commitsExists := r.readers["commits"]
+
+	if refsExists && !commitsExists {
+		objectSource = "references"
+		objectHashKey = 1
+	} else if refsExists && commitsExists {
+		objectSource = "commits"
+		objectHashKey = 1
+
+		if refReader, ok := r.readers["references"]; ok {
+			row, err := refReader.Read()
+			if err != io.EOF && err != nil {
+				return nil, err
+			}
+			if row != nil {
+				r.references = row
+			}
 		}
 	}
 
-	if commitsReader, ok := r.readers["commits"]; ok {
+	if objectReader, ok := r.readers[objectSource]; ok {
 		if r.fileIter == nil {
-			commit, err := commitsReader.Read()
+			object, err := objectReader.Read()
 			if err != nil {
 				// do not wrap this error, as it could be an io.EOF.
 				return nil, err
 			}
-			r.commits = commit
-			treeHash := commit.V[1].(plumbing.Hash)
-			tree, err := r.repo.TreeObject(treeHash)
+			if object != nil && objectSource == "references" {
+				r.references = object
+			}
+			r.commits = object
+			objectHash := object.V[objectHashKey].(plumbing.Hash)
+
+			tree, err := r.repo.TreeObject(objectHash)
 			if err != nil {
 				return nil, errors.Wrap(err, "could not fetch tree object")
 			}
