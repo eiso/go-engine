@@ -46,7 +46,11 @@ func NewReader(repo *git.Repository, path string, options *Options, readers map[
 	// TODO: figure out how to return storer.ReferenceIter
 	// with the filteredRefNames instead of refsIter
 	if options.filter[2] != nil {
-		reader.filtered = filterRefNames(repo, options.filter[2])
+		list, err := filterRefNames(repo, options.filter[2])
+		if err != nil {
+			return nil, err
+		}
+		reader.filtered = list
 		return reader, nil
 	}
 
@@ -58,8 +62,9 @@ func NewReader(repo *git.Repository, path string, options *Options, readers map[
 	return reader, nil
 }
 
-func filterRefNames(r *git.Repository, refNames []string) refsIter {
+func filterRefNames(r *git.Repository, refNames []string) (refsIter, error) {
 	var refs refsIter
+	var counter int
 	for _, name := range refNames {
 		ref, err := r.Storer.Reference(plumbing.ReferenceName(name))
 		if err != nil {
@@ -67,8 +72,13 @@ func filterRefNames(r *git.Repository, refNames []string) refsIter {
 			continue
 		}
 		refs.refs = append(refs.refs, ref)
+		counter++
 	}
-	return refs
+
+	if counter == 0 {
+		return refs, io.EOF
+	}
+	return refs, nil
 }
 
 type refsIter struct {

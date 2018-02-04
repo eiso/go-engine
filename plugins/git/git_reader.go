@@ -20,8 +20,8 @@ func References(path string, partitionCount int) *GitSource {
 func Commits(path string, partitionCount int) *GitSource {
 	return newGitSource("commits", path, partitionCount)
 }
-func Blobs(path string, partitionCount int) *GitSource {
-	return newGitSource("blobs", path, partitionCount)
+func Trees(path string, partitionCount int) *GitSource {
+	return newGitSource("trees", path, partitionCount)
 }
 
 func (ds *shardInfo) NewReader(source string, r *git.Repository, path string, options Options, readers map[string]global.Reader) (global.Reader, error) {

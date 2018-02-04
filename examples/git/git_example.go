@@ -71,10 +71,9 @@ func queryExample(path, query string) (*flow.Dataset, []flow.FlowOption, error) 
 	case "test":
 		//TODO right now filter only works on referenceHash, hard coded, needs to abstract to key
 		filters := make(map[int][]string)
-		filters[2] = []string{"HEAD"}
+		filters[2] = []string{"HEAD", "refs/heads/develop"}
 		refOptions := git.Options{
-			Filter:  filters,
-			Reverse: true,
+			Filter: filters,
 		}
 		commitOptions := git.Options{}
 		treeOptions := git.Options{}

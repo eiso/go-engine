@@ -74,6 +74,9 @@ func (s *shardInfo) ReadSplit() error {
 	// but necessary for chained itteration
 	for source, options := range s.NestedSource {
 		r, err := s.NewReader(source, repo, s.RepoPath, options, nil)
+		if err == io.EOF {
+			return nil
+		}
 		if err != nil {
 			return errors.Wrap(err, "could not read source")
 		}
@@ -130,7 +133,7 @@ func (s *shardInfo) ReadSplit() error {
 	for {
 		row, err := rs[nameDeepestSource].Read()
 		if err == io.EOF {
-			return nil
+			break
 		}
 		if err != nil {
 			return errors.Wrap(err, "unable to itterate further")
