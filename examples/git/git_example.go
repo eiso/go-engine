@@ -67,40 +67,19 @@ func queryExample(path, query string) (*flow.Dataset, []flow.FlowOption, error) 
 	f := flow.New(fmt.Sprintf("Pipeline: %s", query))
 	var p *flow.Dataset
 
-	// repos := f.Read(git.Repositories(path, 1))
-	// refs := f.Read(git.References(path, 1))
-	// commits := f.Read(git.Commits(path, 1))
-	// trees := f.Read(git.Trees(path, 1))
-
 	switch query {
-	// case "treesJoinRefs":
-	// 	p = trees.
-	// 		Map("KeyRefHash", regKey1).
-	// 		JoinByKey("Trees & References",
-	// 			refs.Map("KeyRefHash", regKey1),
-	// 		)
-	// case "allCommitsAcrossAllBranches":
-	// 	p = commits.
-	// 		Map("KeyCommitHash", regKey1).
-	// 		JoinByKey("Commits & References",
-	// 			refs.Map("KeyRefHash", regKey1),
-	// 		)
-	// case "repos":
-	// 	p = repos
-	// case "refs":
-	// 	p = refs
-	// case "commits":
-	// 	p = commits
-	// case "trees":
-	// 	p = trees
 	case "test":
 		filters := make(map[int][]string)
-		filters[2] = []string{"refs/heads/master", "refs/heads/develop"}
-		options := git.Options{
+		filters[2] = []string{"HEAD"}
+		refOptions := git.Options{
 			Filter:  filters,
 			Reverse: true,
 		}
-		p = f.Read(git.Repositories(path, 1).References(options))
+		commitOptions := git.Options{
+			Reverse: false,
+		}
+
+		p = f.Read(git.Repositories(path, 1).References(refOptions).Commits(commitOptions))
 	default:
 		return nil, nil, errors.New("this query is not implemented")
 	}

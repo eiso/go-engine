@@ -1,0 +1,19 @@
+
+
+/home/mthek/projects/tinyrepos//test	0a83fda0622e43f126202535271506b40fe2d87d	ddbe4e3256a778b2279591173355bd887975c6bd	[]	0	adding 3 files to master
+	contact@eisokant.com	Eiso Kant	1517305812	contact@eisokant.com	Eiso Kant	1517305812	[Eiso 7c521229a7b5d5f8b298e4c50d9f156390e09662 []]	[7c521229a7b5d5f8b298e4c50d9f156390e09662 refs/heads/master false]	
+
+/home/mthek/projects/tinyrepos//test	40ae12cd429bff45a37046d890640e8d23495f1e	34f5aad3b40cc6b80d35bd9b92017a6084b5dcf1	[0a83fda0622e43f126202535271506b40fe2d87d]	1	adding 2 files to develop
+	contact@eisokant.com	Eiso Kant	1517305863	contact@eisokant.com	Eiso Kant	1517305863	[Eiso 7c521229a7b5d5f8b298e4c50d9f156390e09662 []]	[7c521229a7b5d5f8b298e4c50d9f156390e09662 refs/heads/master false]	
+
+/home/mthek/projects/tinyrepos//test	7c521229a7b5d5f8b298e4c50d9f156390e09662	41e96f045466fb8114df8b3f1b4d802de58275fb	[0a83fda0622e43f126202535271506b40fe2d87d]	1	adding master4.file to master
+	contact@eisokant.com	Eiso Kant	1517305885	contact@eisokant.com	Eiso Kant	1517305885	[Eiso 7c521229a7b5d5f8b298e4c50d9f156390e09662 []]	[7c521229a7b5d5f8b298e4c50d9f156390e09662 refs/heads/master false]	
+
+/home/mthek/projects/tinyrepos//test2	26895f68d65ff064c0258e3da94b734cc14c0c58	956c4e2c15b3feed8705c3909e2835a2bfc2bb40	[fad26a74efaa0e43e26b3247d30d0804bdab87bf]	1	adds test3.file to master
+	contact@eisokant.com	Eiso Kant	1517440049	contact@eisokant.com	Eiso Kant	1517440049	[Eiso ad4f280960633ad3e848ebda70657956d6501ff5 []]	[26895f68d65ff064c0258e3da94b734cc14c0c58 refs/heads/master false]	
+
+/home/mthek/projects/tinyrepos//test2	ad4f280960633ad3e848ebda70657956d6501ff5	e0c4c305c87f33cc55b6d6ef43563c3e22b137f2	[fad26a74efaa0e43e26b3247d30d0804bdab87bf]	1	adds test3.file & test4.file to branch2
+	contact@eisokant.com	Eiso Kant	1517440024	contact@eisokant.com	Eiso Kant	1517440024	[Eiso ad4f280960633ad3e848ebda70657956d6501ff5 []]	[26895f68d65ff064c0258e3da94b734cc14c0c58 refs/heads/master false]	
+
+/home/mthek/projects/tinyrepos//test2	fad26a74efaa0e43e26b3247d30d0804bdab87bf	237aeb80eb8afb6bdfc8ddee351e5f3c2536dbbb	[]	0	commiting test1.file and test2.file
+	contact@eisokant.com	Eiso Kant	1517439987	contact@eisokant.com	Eiso Kant	1517439987	[Eiso ad4f280960633ad3e848ebda70657956d6501ff5 []]	[26895f68d65ff064c0258e3da94b734cc14c0c58 refs/heads/master false]	

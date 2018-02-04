@@ -3,6 +3,7 @@ package repositories
 import (
 	"io"
 
+	"github.com/chrislusf/gleam/plugins/git/global"
 	"github.com/chrislusf/gleam/util"
 	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
@@ -11,12 +12,30 @@ import (
 type Reader struct {
 	repositoryID string
 	repos        *reposIter
+	pos          int
+
+	readers map[string]global.Reader
+	options *Options
 }
 
-func NewReader(repo *git.Repository, path string) (*Reader, error) {
+type Options struct {
+	filter  map[int][]string
+	reverse bool
+}
+
+func NewOptions(a map[int][]string, b bool) (*Options, error) {
+	return &Options{
+		filter:  a,
+		reverse: b,
+	}, nil
+}
+
+func NewReader(repo *git.Repository, path string, options *Options, readers map[string]global.Reader) (*Reader, error) {
 	return &Reader{
 		repos:        &reposIter{repos: []*git.Repository{repo}},
 		repositoryID: path,
+		readers:      readers,
+		options:      options,
 	}, nil
 }
 
@@ -53,7 +72,7 @@ func (r *Reader) Read() (*util.Row, error) {
 		return nil, errors.Wrap(err, "could not get head from repository")
 	}
 
-	return util.NewRow(util.Now(), r.repositoryID, head.Hash().String(), remoteURLs), nil
+	return util.NewRow(util.Now(), r.repositoryID, "JACK", head.Hash().String(), remoteURLs), nil
 }
 
 type reposIter struct {

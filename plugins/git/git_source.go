@@ -34,9 +34,7 @@ type pipeline interface {
 	flow.Sourcer
 }
 
-type dataType string
-
-type nestedSource map[dataType]Options
+type nestedSource map[string]Options
 
 type Options struct {
 	Filter  map[int][]string

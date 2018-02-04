@@ -3,12 +3,10 @@ package git
 import (
 	"fmt"
 
-	"github.com/chrislusf/gleam/plugins/git/blobs"
 	"github.com/chrislusf/gleam/plugins/git/commits"
+	"github.com/chrislusf/gleam/plugins/git/global"
 	"github.com/chrislusf/gleam/plugins/git/references"
 	"github.com/chrislusf/gleam/plugins/git/repositories"
-	"github.com/chrislusf/gleam/plugins/git/trees"
-	"github.com/chrislusf/gleam/util"
 	git "gopkg.in/src-d/go-git.v4"
 )
 
@@ -28,37 +26,39 @@ func Blobs(path string, partitionCount int) *GitSource {
 	return newGitSource("blobs", path, partitionCount)
 }
 
-type Reader interface {
-	Read() (*util.Row, error)
-	ReadHeader() ([]string, error)
-}
+func (ds *shardInfo) NewReader(source string, r *git.Repository, path string, options Options, readers map[string]global.Reader) (global.Reader, error) {
+	var reader global.Reader
 
-func (ds *shardInfo) NewReader(r *git.Repository, path string) (Reader, error) {
-	switch ds.DataType {
+	switch source {
 	case "repositories":
-		return repositories.NewReader(r, path)
+		opts, err := repositories.NewOptions(options.Filter, options.Reverse)
+		if err != nil {
+			return nil, err
+		}
+		reader, err = repositories.NewReader(r, path, opts, readers)
+		if err != nil {
+			return nil, err
+		}
 	case "references":
-		return references.NewReader(r, path)
+		opts, err := references.NewOptions(options.Filter, options.Reverse)
+		if err != nil {
+			return nil, err
+		}
+		reader, err = references.NewReader(r, path, opts, readers)
+		if err != nil {
+			return nil, err
+		}
 	case "commits":
-		return commits.NewReader(r, path)
-	case "trees":
-		return trees.NewReader(r, path)
-	case "blobs":
-		return blobs.NewReader(r, path)
+		opts, err := commits.NewOptions(options.Filter, options.Reverse)
+		if err != nil {
+			return nil, err
+		}
+		reader, err = commits.NewReader(r, path, opts, readers)
+		if err != nil {
+			return nil, err
+		}
+	case "default":
+		return nil, fmt.Errorf("%s is not an implemented source", source)
 	}
-	return nil, fmt.Errorf("unkown data type %q", ds.DataType)
-}
-
-func (ds *shardInfo) NewReader2(r *git.Repository, path string, options Options) (Reader, error) {
-
-	opts, err := references.NewOptions(options.Filter, options.Reverse)
-	if err != nil {
-		return nil, err
-	}
-	reader, err := references.NewReader2(r, path, opts)
-	if err != nil {
-		return nil, err
-	}
-
 	return reader, nil
 }

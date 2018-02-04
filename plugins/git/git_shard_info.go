@@ -6,11 +6,9 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/exec"
-	"strings"
 
 	"github.com/chrislusf/gleam/gio"
-	"github.com/chrislusf/gleam/util"
+	"github.com/chrislusf/gleam/plugins/git/global"
 	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
 )
@@ -51,22 +49,6 @@ func removeDuplicates(vs []string) []string {
 	return result
 }
 
-func getRefChildren(path, refHash string, refName string) error {
-	cmd := exec.Command("git", "rev-list", "--children", refHash)
-	cmd.Dir = path
-	output, err := cmd.Output()
-	if err != nil {
-		return errors.Wrapf(err, "could not run %s %s", cmd.Path, cmd.Args)
-	}
-
-	hashes := removeDuplicates(strings.Fields(string(output)))
-	for _, hash := range hashes {
-		row := util.NewRow(util.Now(), path, refHash, refName, hash)
-		row.WriteTo(os.Stdout)
-	}
-	return nil
-}
-
 func (s *shardInfo) ReadSplit() error {
 	log.Printf("reading %s from repo: %s", s.DataType, s.RepoPath)
 
@@ -75,48 +57,121 @@ func (s *shardInfo) ReadSplit() error {
 		return errors.Wrap(err, "could not open repo")
 	}
 
-	reader, err := s.NewReader(repo, s.RepoPath)
+	rs := make(map[string]global.Reader)
+	temp := make(map[string]global.Reader)
+
+	//TODO Need to still add options to repositories base source
+	emptyOptions := Options{}
+	reposReader, err := s.NewReader(s.DataType, repo, s.RepoPath, emptyOptions, nil)
 	if err != nil {
 		return errors.Wrapf(err, "could not read repository %s", s.RepoPath)
 	}
 
-	var r Reader
+	temp[s.DataType] = reposReader
+	rs[s.DataType] = reposReader
+
+	// the overhead of building the readers twice is limited
+	// but necessary for chained itteration
+	for source, options := range s.NestedSource {
+		r, err := s.NewReader(source, repo, s.RepoPath, options, nil)
+		if err != nil {
+			return errors.Wrap(err, "could not read references")
+		}
+		temp[source] = r
+	}
+
+	const (
+		repositories = iota
+		references
+		commits
+		trees
+		blobs
+	)
+
+	deepestSource := repositories
+	var nameDeepestSource string
 
 	for source, options := range s.NestedSource {
-		log.Printf("%s: %v\n", source, options)
+		r, err := s.NewReader(source, repo, s.RepoPath, options, temp)
+		if err != nil {
+			return errors.Wrap(err, "could not read references")
+		}
+		rs[source] = r
 
 		switch source {
+		case "repositories":
+			if deepestSource < repositories {
+				deepestSource = repositories
+				nameDeepestSource = source
+			}
 		case "references":
-			r, err = s.NewReader2(repo, s.RepoPath, options)
-			if err != nil {
-				return errors.Wrap(err, "could not read references")
+			if deepestSource < references {
+				deepestSource = references
+				nameDeepestSource = source
 			}
 		case "commits":
+			if deepestSource < commits {
+				deepestSource = commits
+				nameDeepestSource = source
+			}
 		case "trees":
+			if deepestSource < trees {
+				deepestSource = trees
+				nameDeepestSource = source
+			}
+		case "blobs":
+			if deepestSource < blobs {
+				deepestSource = blobs
+				nameDeepestSource = source
+			}
 		}
 	}
-
-	if s.HasHeader {
-		if _, err := reader.ReadHeader(); err != nil {
-			return errors.Wrap(err, "could not read headers")
-		}
-	}
-
-	log.Printf("\n%v", r)
 
 	for {
-		row, err := r.Read()
+		row, err := rs[nameDeepestSource].Read()
 		if err == io.EOF {
 			return nil
-		} else if err != nil {
-			return errors.Wrap(err, "could not get next file")
 		}
-
-		// Writing to stdout is how agents communicate.
 		if err := row.WriteTo(os.Stdout); err != nil {
 			return errors.Wrap(err, "could not write row to stdout")
 		}
 	}
+
+	// for {
+	// 	_, err := rs["repositories"].Read()
+	// 	if err == io.EOF {
+	// 		return nil
+	// 	}
+	// 	for {
+	// 		_, err := rs["references"].Read()
+	// 		if err == io.EOF {
+	// 			return nil
+	// 		}
+	// 		for {
+	// 			commits, err := rs["commits"].Read()
+	// 			if err == io.EOF {
+	// 				return nil
+	// 			}
+	// 			output := commits //.AppendValue(repos.V, refs.V)
+	// 			if err := output.WriteTo(os.Stdout); err != nil {
+	// 				return errors.Wrap(err, "could not write row to stdout")
+	// 			}
+	// 		}
+	// 	}
+	// }
+	// for {
+	// 	row, err := r.Read()
+	// 	if err == io.EOF {
+	// 		return nil
+	// 	} else if err != nil {
+	// 		return errors.Wrap(err, "could not get next file")
+	// 	}
+
+	// 	// Writing to stdout is how agents communicate.
+	// 	if err := row.WriteTo(os.Stdout); err != nil {
+	// 		return errors.Wrap(err, "could not write row to stdout")
+	// 	}
+	// }
 	return nil
 }
 
