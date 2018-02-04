@@ -1,0 +1,13 @@
+apiVersion: batch/v1
+kind: Job 
+metadata:
+  name: driver
+spec:
+  template:
+    spec:
+      containers:
+      - name: driver-container
+        image: eisokant/driver
+        command: ["/usr/bin/driver"]
+        args: ["--onDocker", "--query=test", "/data"]
+      restartPolicy: Never
