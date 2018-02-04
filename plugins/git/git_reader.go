@@ -7,6 +7,7 @@ import (
 	"github.com/chrislusf/gleam/plugins/git/global"
 	"github.com/chrislusf/gleam/plugins/git/references"
 	"github.com/chrislusf/gleam/plugins/git/repositories"
+	"github.com/chrislusf/gleam/plugins/git/trees"
 	git "gopkg.in/src-d/go-git.v4"
 )
 
@@ -18,9 +19,6 @@ func References(path string, partitionCount int) *GitSource {
 }
 func Commits(path string, partitionCount int) *GitSource {
 	return newGitSource("commits", path, partitionCount)
-}
-func Trees(path string, partitionCount int) *GitSource {
-	return newGitSource("trees", path, partitionCount)
 }
 func Blobs(path string, partitionCount int) *GitSource {
 	return newGitSource("blobs", path, partitionCount)
@@ -54,6 +52,15 @@ func (ds *shardInfo) NewReader(source string, r *git.Repository, path string, op
 			return nil, err
 		}
 		reader, err = commits.NewReader(r, path, opts, readers)
+		if err != nil {
+			return nil, err
+		}
+	case "trees":
+		opts, err := trees.NewOptions(options.Filter, options.Reverse)
+		if err != nil {
+			return nil, err
+		}
+		reader, err = trees.NewReader(r, path, opts, readers)
 		if err != nil {
 			return nil, err
 		}

@@ -122,7 +122,7 @@ func (r *Reader) Read() (*util.Row, error) {
 	row := util.NewRow(util.Now(),
 		r.repositoryID,
 		commit.Hash,
-		commit.TreeHash.String(),
+		commit.TreeHash,
 		parentHashes,
 		len(parentHashes),
 		commit.Message,

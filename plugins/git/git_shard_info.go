@@ -75,7 +75,7 @@ func (s *shardInfo) ReadSplit() error {
 	for source, options := range s.NestedSource {
 		r, err := s.NewReader(source, repo, s.RepoPath, options, nil)
 		if err != nil {
-			return errors.Wrap(err, "could not read references")
+			return errors.Wrap(err, "could not read source")
 		}
 		temp[source] = r
 	}
@@ -132,46 +132,14 @@ func (s *shardInfo) ReadSplit() error {
 		if err == io.EOF {
 			return nil
 		}
+		if err != nil {
+			return errors.Wrap(err, "unable to itterate further")
+		}
 		if err := row.WriteTo(os.Stdout); err != nil {
 			return errors.Wrap(err, "could not write row to stdout")
 		}
 	}
 
-	// for {
-	// 	_, err := rs["repositories"].Read()
-	// 	if err == io.EOF {
-	// 		return nil
-	// 	}
-	// 	for {
-	// 		_, err := rs["references"].Read()
-	// 		if err == io.EOF {
-	// 			return nil
-	// 		}
-	// 		for {
-	// 			commits, err := rs["commits"].Read()
-	// 			if err == io.EOF {
-	// 				return nil
-	// 			}
-	// 			output := commits //.AppendValue(repos.V, refs.V)
-	// 			if err := output.WriteTo(os.Stdout); err != nil {
-	// 				return errors.Wrap(err, "could not write row to stdout")
-	// 			}
-	// 		}
-	// 	}
-	// }
-	// for {
-	// 	row, err := r.Read()
-	// 	if err == io.EOF {
-	// 		return nil
-	// 	} else if err != nil {
-	// 		return errors.Wrap(err, "could not get next file")
-	// 	}
-
-	// 	// Writing to stdout is how agents communicate.
-	// 	if err := row.WriteTo(os.Stdout); err != nil {
-	// 		return errors.Wrap(err, "could not write row to stdout")
-	// 	}
-	// }
 	return nil
 }
 

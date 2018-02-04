@@ -69,17 +69,21 @@ func queryExample(path, query string) (*flow.Dataset, []flow.FlowOption, error) 
 
 	switch query {
 	case "test":
+		//TODO right now filter only works on referenceHash, hard coded, needs to abstract to key
 		filters := make(map[int][]string)
 		filters[2] = []string{"HEAD"}
 		refOptions := git.Options{
 			Filter:  filters,
 			Reverse: true,
 		}
-		commitOptions := git.Options{
-			Reverse: false,
-		}
+		commitOptions := git.Options{}
+		treeOptions := git.Options{}
 
-		p = f.Read(git.Repositories(path, 1).References(refOptions).Commits(commitOptions))
+		p = f.Read(git.Repositories(path, 1).
+			References(refOptions).
+			Commits(commitOptions).
+			Trees(treeOptions))
+
 	default:
 		return nil, nil, errors.New("this query is not implemented")
 	}
