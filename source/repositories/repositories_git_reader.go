@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"github.com/chrislusf/gleam/util"
-	"github.com/eiso/go-engine/global"
+	"github.com/eiso/go-engine/source"
 	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
 )
@@ -14,7 +14,7 @@ type Reader struct {
 	repos        *reposIter
 	pos          int
 
-	readers map[string]global.Reader
+	readers map[string]source.Reader
 	options *Options
 }
 
@@ -30,7 +30,7 @@ func NewOptions(a map[int][]string, b bool) (*Options, error) {
 	}, nil
 }
 
-func NewReader(repo *git.Repository, path string, options *Options, readers map[string]global.Reader) (*Reader, error) {
+func NewReader(repo *git.Repository, path string, options *Options, readers map[string]source.Reader) (*Reader, error) {
 	return &Reader{
 		repos:        &reposIter{repos: []*git.Repository{repo}},
 		repositoryID: path,

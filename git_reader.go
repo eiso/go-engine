@@ -3,7 +3,7 @@ package engine
 import (
 	"fmt"
 
-	"github.com/eiso/go-engine/global"
+	"github.com/eiso/go-engine/source"
 	"github.com/eiso/go-engine/source/commits"
 	"github.com/eiso/go-engine/source/references"
 	"github.com/eiso/go-engine/source/repositories"
@@ -24,10 +24,10 @@ func Trees(path string, partitionCount int) *GitSource {
 	return newGitSource("trees", path, partitionCount)
 }
 
-func (ds *shardInfo) NewReader(source string, r *git.Repository, path string, options Options, readers map[string]global.Reader) (global.Reader, error) {
-	var reader global.Reader
+func (ds *shardInfo) NewReader(src string, r *git.Repository, path string, options Options, readers map[string]source.Reader) (source.Reader, error) {
+	var reader source.Reader
 
-	switch source {
+	switch src {
 	case "repositories":
 		opts, err := repositories.NewOptions(options.Filter, options.Reverse)
 		if err != nil {
@@ -65,7 +65,7 @@ func (ds *shardInfo) NewReader(source string, r *git.Repository, path string, op
 			return nil, err
 		}
 	case "default":
-		return nil, fmt.Errorf("%s is not an implemented source", source)
+		return nil, fmt.Errorf("%s is not an implemented source", src)
 	}
 	return reader, nil
 }

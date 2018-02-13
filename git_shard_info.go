@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/chrislusf/gleam/gio"
-	"github.com/eiso/go-engine/global"
+	"github.com/eiso/go-engine/source"
 	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
 )
@@ -57,8 +57,8 @@ func (s *shardInfo) ReadSplit() error {
 		return errors.Wrap(err, "could not open repo")
 	}
 
-	rs := make(map[string]global.Reader)
-	temp := make(map[string]global.Reader)
+	rs := make(map[string]source.Reader)
+	temp := make(map[string]source.Reader)
 
 	//TODO Need to still add options to repositories base source
 	emptyOptions := Options{}
