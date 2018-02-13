@@ -3,8 +3,8 @@ package trees
 import (
 	"io"
 
-	"github.com/chrislusf/gleam/plugins/git/global"
 	"github.com/chrislusf/gleam/util"
+	"github.com/eiso/go-engine/global"
 	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"

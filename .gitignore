@@ -1,7 +1,3 @@
-
-.DS_Store
-
-.idea/*
-docker/driver
-docker/driver-darwin
-docker/gleam
+_examples/driver/docker/driver
+_examples/driver/docker/driver-darwin
+_examples/driver/docker/gleam

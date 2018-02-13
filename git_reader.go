@@ -1,13 +1,13 @@
-package git
+package engine
 
 import (
 	"fmt"
 
-	"github.com/chrislusf/gleam/plugins/git/commits"
-	"github.com/chrislusf/gleam/plugins/git/global"
-	"github.com/chrislusf/gleam/plugins/git/references"
-	"github.com/chrislusf/gleam/plugins/git/repositories"
-	"github.com/chrislusf/gleam/plugins/git/trees"
+	"github.com/eiso/go-engine/global"
+	"github.com/eiso/go-engine/source/commits"
+	"github.com/eiso/go-engine/source/references"
+	"github.com/eiso/go-engine/source/repositories"
+	"github.com/eiso/go-engine/source/trees"
 	git "gopkg.in/src-d/go-git.v4"
 )
 

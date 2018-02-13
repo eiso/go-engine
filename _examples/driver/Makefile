@@ -1,8 +1,8 @@
 BINARY = gleam
-SOURCE_DIR = ../distributed/gleam
+SOURCE_DIR = github.com/chrislusf/gleam/distributed/gleam
 
 BINARY_DRIVER = driver
-DRIVER_SOURCE_DIR = ../examples/git
+DRIVER_SOURCE_DIR = github.com/eiso/go-engine/_examples/driver
 
 .PHONY : clean deps binaries docker run_docker
 
@@ -25,9 +25,9 @@ binaries-darwin: deps
 	GOOS=darwin CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o $(BINARY_DRIVER)-darwin $(DRIVER_SOURCE_DIR)
 
 docker: binaries
-	docker build -f Dockerfile.driver -t eisokant/driver .
+	docker build -f docker/Dockerfile.driver -t eisokant/driver .
 	docker push eisokant/driver
-	docker build -f Dockerfile.gleam -t eisokant/gleam .
+	docker build -f docker/Dockerfile.gleam -t eisokant/gleam .
 	docker push eisokant/gleam
 
 run_docker: docker

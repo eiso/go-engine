@@ -1,4 +1,4 @@
-package git
+package engine
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/chrislusf/gleam/gio"
-	"github.com/chrislusf/gleam/plugins/git/global"
+	"github.com/eiso/go-engine/global"
 	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
 )
