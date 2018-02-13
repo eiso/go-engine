@@ -1,4 +1,6 @@
-package blobs
+package source
+
+// TODO refactor to new chained API
 
 import (
 	"github.com/chrislusf/gleam/util"

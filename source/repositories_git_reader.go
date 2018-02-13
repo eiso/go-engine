@@ -1,37 +1,24 @@
-package repositories
+package source
 
 import (
 	"io"
 
 	"github.com/chrislusf/gleam/util"
-	"github.com/eiso/go-engine/source"
 	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
 )
 
-type Reader struct {
+type Repositories struct {
 	repositoryID string
 	repos        *reposIter
 	pos          int
 
-	readers map[string]source.Reader
+	readers map[string]SourceReaders
 	options *Options
 }
 
-type Options struct {
-	filter  map[int][]string
-	reverse bool
-}
-
-func NewOptions(a map[int][]string, b bool) (*Options, error) {
-	return &Options{
-		filter:  a,
-		reverse: b,
-	}, nil
-}
-
-func NewReader(repo *git.Repository, path string, options *Options, readers map[string]source.Reader) (*Reader, error) {
-	return &Reader{
+func NewRepositories(repo *git.Repository, path string, options *Options, readers map[string]SourceReaders) (*Repositories, error) {
+	return &Repositories{
 		repos:        &reposIter{repos: []*git.Repository{repo}},
 		repositoryID: path,
 		readers:      readers,
@@ -39,7 +26,14 @@ func NewReader(repo *git.Repository, path string, options *Options, readers map[
 	}, nil
 }
 
-func (r *Reader) ReadHeader() (fieldNames []string, err error) {
+func NewRepositoriesOptions(a map[int][]string, b bool) (*Options, error) {
+	return &Options{
+		filter:  a,
+		reverse: b,
+	}, nil
+}
+
+func (r *Repositories) ReadHeader() (fieldNames []string, err error) {
 	return []string{
 		"repositoryID",
 		"repositoryURLs",
@@ -48,7 +42,7 @@ func (r *Reader) ReadHeader() (fieldNames []string, err error) {
 }
 
 //TODO: add is_fork
-func (r *Reader) Read() (*util.Row, error) {
+func (r *Repositories) Read() (*util.Row, error) {
 	repository, err := r.repos.Next()
 	if err != nil {
 		// do not wrap this error, as it could be an io.EOF.

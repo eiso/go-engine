@@ -1,17 +1,16 @@
-package commits
+package source
 
 import (
 	"io"
 
 	"github.com/chrislusf/gleam/util"
-	"github.com/eiso/go-engine/source"
 	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
-type Reader struct {
+type Commits struct {
 	repositoryID string
 	repo         *git.Repository
 	commits      object.CommitIter
@@ -19,24 +18,12 @@ type Reader struct {
 	repositories *util.Row
 	references   *util.Row
 
-	readers map[string]source.Reader
+	readers map[string]SourceReaders
 	options *Options
 }
 
-type Options struct {
-	filter  map[int][]string
-	reverse bool
-}
-
-func NewOptions(a map[int][]string, b bool) (*Options, error) {
-	return &Options{
-		filter:  a,
-		reverse: b,
-	}, nil
-}
-
-func NewReader(repo *git.Repository, path string, options *Options, readers map[string]source.Reader) (*Reader, error) {
-	reader := &Reader{repositoryID: path,
+func NewCommits(repo *git.Repository, path string, options *Options, readers map[string]SourceReaders) (*Commits, error) {
+	reader := &Commits{repositoryID: path,
 		repo:    repo,
 		options: options,
 		readers: readers,
@@ -55,7 +42,14 @@ func NewReader(repo *git.Repository, path string, options *Options, readers map[
 	return reader, nil
 }
 
-func (r *Reader) ReadHeader() ([]string, error) {
+func NewCommitsOptions(a map[int][]string, b bool) (*Options, error) {
+	return &Options{
+		filter:  a,
+		reverse: b,
+	}, nil
+}
+
+func (r *Commits) ReadHeader() ([]string, error) {
 	return []string{
 		"repositoryID",
 		"commitHash",
@@ -72,7 +66,7 @@ func (r *Reader) ReadHeader() ([]string, error) {
 	}, nil
 }
 
-func (r *Reader) Read() (*util.Row, error) {
+func (r *Commits) Read() (*util.Row, error) {
 
 	if repoReader, ok := r.readers["repositories"]; ok {
 		row, err := repoReader.Read()

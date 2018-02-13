@@ -57,8 +57,8 @@ func (s *shardInfo) ReadSplit() error {
 		return errors.Wrap(err, "could not open repo")
 	}
 
-	rs := make(map[string]source.Reader)
-	temp := make(map[string]source.Reader)
+	rs := make(map[string]source.SourceReaders)
+	temp := make(map[string]source.SourceReaders)
 
 	//TODO Need to still add options to repositories base source
 	emptyOptions := Options{}

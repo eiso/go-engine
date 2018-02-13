@@ -1,17 +1,16 @@
-package references
+package source
 
 import (
 	"io"
 
 	"github.com/chrislusf/gleam/util"
-	"github.com/eiso/go-engine/source"
 	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	storer "gopkg.in/src-d/go-git.v4/plumbing/storer"
 )
 
-type Reader struct {
+type References struct {
 	repositoryID string
 	repo         *git.Repository
 	refs         storer.ReferenceIter
@@ -19,24 +18,12 @@ type Reader struct {
 
 	repositories *util.Row
 
-	readers map[string]source.Reader
+	readers map[string]SourceReaders
 	options *Options
 }
 
-type Options struct {
-	filter  map[int][]string
-	reverse bool
-}
-
-func NewOptions(a map[int][]string, b bool) (*Options, error) {
-	return &Options{
-		filter:  a,
-		reverse: b,
-	}, nil
-}
-
-func NewReader(repo *git.Repository, path string, options *Options, readers map[string]source.Reader) (*Reader, error) {
-	reader := &Reader{
+func NewReferences(repo *git.Repository, path string, options *Options, readers map[string]SourceReaders) (*References, error) {
+	reader := &References{
 		repositoryID: path,
 		repo:         repo,
 		options:      options,
@@ -60,6 +47,13 @@ func NewReader(repo *git.Repository, path string, options *Options, readers map[
 	}
 	reader.refs = refs
 	return reader, nil
+}
+
+func NewReferencesOptions(a map[int][]string, b bool) (*Options, error) {
+	return &Options{
+		filter:  a,
+		reverse: b,
+	}, nil
 }
 
 func filterRefNames(r *git.Repository, refNames []string) (refsIter, error) {
@@ -95,7 +89,7 @@ func (iter *refsIter) Next() (*plumbing.Reference, error) {
 	return ref, nil
 }
 
-func (r *Reader) ReadHeader() ([]string, error) {
+func (r *References) ReadHeader() ([]string, error) {
 	return []string{
 		"repositoryID",
 		"refHash",
@@ -105,7 +99,7 @@ func (r *Reader) ReadHeader() ([]string, error) {
 	}, nil
 }
 
-func (r *Reader) Read() (*util.Row, error) {
+func (r *References) Read() (*util.Row, error) {
 
 	if repoReader, ok := r.readers["repositories"]; ok {
 		row, err := repoReader.Read()
