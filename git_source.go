@@ -28,13 +28,6 @@ type GitSource struct {
 	prefix string
 }
 
-type pipeline interface {
-	Commits() *GitSource
-	References() *GitSource
-	Trees() *GitSource
-	flow.Sourcer
-}
-
 type nestedSource map[string]options.Config
 
 // New creates a GitSource based on a path.

@@ -10,7 +10,6 @@ import (
 	"github.com/chrislusf/gleam/distributed"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/gio"
-	"github.com/chrislusf/gleam/util"
 	engine "github.com/eiso/go-engine"
 	"github.com/eiso/go-engine/options"
 	"github.com/eiso/go-engine/utils"
@@ -22,14 +21,13 @@ func main() {
 		query           = flag.String("query", "", "name the query you want to run")
 		isDistributed   = flag.Bool("distributed", false, "run in distributed or not")
 		isDockerCluster = flag.Bool("onDocker", false, "run in docker cluster")
+		pathPtr         = flag.String("path", ".", "")
 	)
 
 	gio.Init()
 
-	var path = "."
-	if args := flag.Args(); len(args) > 0 {
-		path = args[0]
-	}
+	var path = *pathPtr
+
 	log.Printf("analyzing %s", path)
 
 	start := time.Now()
@@ -44,7 +42,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	p.OutputRow(printRow)
+	p.OutputRow(utils.PrintRow)
 
 	switch {
 	case *isDistributed:
@@ -54,14 +52,21 @@ func main() {
 	}
 	p.Run(opts...)
 
-	log.Printf("\nprocessed %d rows successfully in %v\n", count, time.Since(start))
+	log.Printf("\nprocessed rows successfully in %v\n", time.Since(start))
 }
 
 var (
 	opts    []flow.FlowOption
 	regKey1 = gio.RegisterMapper(utils.ColumnToKey(1))
-	refKey2 = gio.RegisterMapper(utils.ColumnToKey(1))
+	regKey2 = gio.RegisterMapper(utils.ColumnToKey(1))
 	regKey3 = gio.RegisterMapper(utils.ColumnToKey(3))
+
+	one = gio.RegisterMapper(func(x []interface{}) error {
+		return gio.Emit(1)
+	})
+	sum = gio.RegisterReducer(func(a, b interface{}) (interface{}, error) {
+		return a.(int64) + b.(int64), nil
+	})
 )
 
 func queryExample(path, query string) (*flow.Dataset, []flow.FlowOption, error) {
@@ -79,21 +84,10 @@ func queryExample(path, query string) (*flow.Dataset, []flow.FlowOption, error) 
 
 		p = f.Read(engine.Repositories(path, 1).
 			References(filter).
-			//Commits().
+			Commits().
 			Trees())
 	default:
 		return nil, nil, errors.New("this query is not implemented")
 	}
 	return p, opts, nil
-}
-
-var count int64
-
-func printRow(row *util.Row) error {
-	fmt.Printf("\n\n%v\t", row.K[0])
-	count++
-	for _, v := range row.V {
-		fmt.Printf("%v\t", v)
-	}
-	return nil
 }

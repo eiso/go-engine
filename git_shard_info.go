@@ -30,6 +30,20 @@ func init() {
 	gob.Register(shardInfo{})
 }
 
+func (s *shardInfo) decode(b []byte) error {
+	dec := gob.NewDecoder(bytes.NewReader(b))
+	return dec.Decode(s)
+}
+
+func (s *shardInfo) encode() ([]byte, error) {
+	var b bytes.Buffer
+	enc := gob.NewEncoder(&b)
+	if err := enc.Encode(s); err != nil {
+		return nil, errors.Wrap(err, "could not encode shard info")
+	}
+	return b.Bytes(), nil
+}
+
 func readShard(row []interface{}) error {
 	var s shardInfo
 	if err := s.decode(gio.ToBytes(row[0])); err != nil {
@@ -38,24 +52,12 @@ func readShard(row []interface{}) error {
 	return s.ReadSplit()
 }
 
-func removeDuplicates(vs []string) []string {
-	result := make([]string, 0, len(vs))
-	seen := make(map[string]string, len(vs))
-	for _, v := range vs {
-		if _, ok := seen[v]; !ok {
-			result = append(result, v)
-			seen[v] = v
-		}
-	}
-	return result
-}
-
 func (s *shardInfo) ReadSplit() error {
-	log.Printf("reading %s from repo: %s", s.DataType, s.RepoPath)
+	log.Printf("reading %s from: %s", s.DataType, s.RepoPath)
 
 	repo, err := git.PlainOpen(s.RepoPath)
 	if err != nil {
-		return errors.Wrap(err, "could not open repo")
+		return errors.Wrap(err, "could not open repository")
 	}
 
 	rs := make(map[string]source.SourceReaders)
@@ -93,7 +95,7 @@ func (s *shardInfo) ReadSplit() error {
 	)
 
 	deepestSource := repositories
-	var nameDeepestSource string
+	nameDeepestSource := "repositories"
 
 	for source, options := range s.NestedSource {
 		r, err := s.NewReader(source, repo, s.RepoPath, &options, temp)
@@ -145,18 +147,4 @@ func (s *shardInfo) ReadSplit() error {
 	}
 
 	return nil
-}
-
-func (s *shardInfo) decode(b []byte) error {
-	dec := gob.NewDecoder(bytes.NewReader(b))
-	return dec.Decode(s)
-}
-
-func (s *shardInfo) encode() ([]byte, error) {
-	var b bytes.Buffer
-	enc := gob.NewEncoder(&b)
-	if err := enc.Encode(s); err != nil {
-		return nil, errors.Wrap(err, "could not encode shard info")
-	}
-	return b.Bytes(), nil
 }
