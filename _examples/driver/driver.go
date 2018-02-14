@@ -12,6 +12,7 @@ import (
 	"github.com/chrislusf/gleam/gio"
 	"github.com/chrislusf/gleam/util"
 	engine "github.com/eiso/go-engine"
+	"github.com/eiso/go-engine/options"
 	"github.com/eiso/go-engine/utils"
 	"github.com/pkg/errors"
 )
@@ -70,7 +71,7 @@ func queryExample(path, query string) (*flow.Dataset, []flow.FlowOption, error) 
 	switch query {
 	case "test":
 		//TODO right now filter only works on referenceHash, hard coded, needs to abstract to key
-		filter := func(opts *engine.Options) {
+		filter := func(opts *options.Config) {
 			filters := make(map[int][]string)
 			filters[2] = []string{"HEAD", "refs/heads/develop"}
 			opts.Filter = filters
