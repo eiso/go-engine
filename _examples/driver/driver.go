@@ -70,17 +70,16 @@ func queryExample(path, query string) (*flow.Dataset, []flow.FlowOption, error) 
 	switch query {
 	case "test":
 		//TODO right now filter only works on referenceHash, hard coded, needs to abstract to key
-		filters := make(map[int][]string)
-		filters[2] = []string{"HEAD", "refs/heads/develop"}
-		refOptions := engine.Options{
-			Filter: filters,
+		filter := func(opts *engine.Options) {
+			filters := make(map[int][]string)
+			filters[2] = []string{"HEAD", "refs/heads/develop"}
+			opts.Filter = filters
 		}
 
 		p = f.Read(engine.Repositories(path, 1).
-			References(refOptions).
-			//Commits(engine.Options{}).
-			Trees(engine.Options{}))
-
+			References(filter).
+			//Commits().
+			Trees())
 	default:
 		return nil, nil, errors.New("this query is not implemented")
 	}

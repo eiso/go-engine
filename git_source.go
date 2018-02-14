@@ -58,18 +58,33 @@ func newGitSource(dataType, fsPath string, partitionCount int) *GitSource {
 	}
 }
 
-func (s *GitSource) Commits(options Options) *GitSource {
-	s.nestedSource["commits"] = options
+func (s *GitSource) Commits(options ...func(*Options)) *GitSource {
+	opts := Options{}
+	for _, option := range options {
+		option(&opts)
+	}
+
+	s.nestedSource["commits"] = opts
 	return s
 }
 
-func (s *GitSource) References(options Options) *GitSource {
-	s.nestedSource["references"] = options
+func (s *GitSource) References(options ...func(*Options)) *GitSource {
+	opts := Options{}
+	for _, option := range options {
+		option(&opts)
+	}
+
+	s.nestedSource["references"] = opts
 	return s
 }
 
-func (s *GitSource) Trees(options Options) *GitSource {
-	s.nestedSource["trees"] = options
+func (s *GitSource) Trees(options ...func(*Options)) *GitSource {
+	opts := Options{}
+	for _, option := range options {
+		option(&opts)
+	}
+
+	s.nestedSource["trees"] = opts
 	return s
 }
 
