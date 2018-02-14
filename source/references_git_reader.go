@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"github.com/chrislusf/gleam/util"
+	"github.com/eiso/go-engine/options"
 	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -19,21 +20,21 @@ type References struct {
 	repositories *util.Row
 
 	readers map[string]SourceReaders
-	options *Options
+	options *options.Config
 }
 
-func NewReferences(repo *git.Repository, path string, options *Options, readers map[string]SourceReaders) (*References, error) {
+func NewReferences(repo *git.Repository, path string, opts *options.Config, readers map[string]SourceReaders) (*References, error) {
 	reader := &References{
 		repositoryID: path,
 		repo:         repo,
-		options:      options,
+		options:      opts,
 		readers:      readers,
 	}
 
 	// TODO: figure out how to return storer.ReferenceIter
 	// with the filteredRefNames instead of refsIter
-	if options.filter[2] != nil {
-		list, err := filterRefNames(repo, options.filter[2])
+	if opts.Filter[2] != nil {
+		list, err := filterRefNames(repo, opts.Filter[2])
 		if err != nil {
 			return nil, err
 		}
@@ -47,13 +48,6 @@ func NewReferences(repo *git.Repository, path string, options *Options, readers 
 	}
 	reader.refs = refs
 	return reader, nil
-}
-
-func NewReferencesOptions(a map[int][]string, b bool) (*Options, error) {
-	return &Options{
-		filter:  a,
-		reverse: b,
-	}, nil
 }
 
 func filterRefNames(r *git.Repository, refNames []string) (refsIter, error) {

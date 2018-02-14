@@ -11,6 +11,7 @@ import (
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
+	"github.com/eiso/go-engine/options"
 	"github.com/pkg/errors"
 )
 
@@ -34,12 +35,7 @@ type pipeline interface {
 	flow.Sourcer
 }
 
-type nestedSource map[string]Options
-
-type Options struct {
-	Filter  map[int][]string
-	Reverse bool
-}
+type nestedSource map[string]options.Config
 
 // New creates a GitSource based on a path.
 func newGitSource(dataType, fsPath string, partitionCount int) *GitSource {
@@ -58,9 +54,9 @@ func newGitSource(dataType, fsPath string, partitionCount int) *GitSource {
 	}
 }
 
-func (s *GitSource) Commits(options ...func(*Options)) *GitSource {
-	opts := Options{}
-	for _, option := range options {
+func (s *GitSource) Commits(o ...func(*options.Config)) *GitSource {
+	opts := options.Config{}
+	for _, option := range o {
 		option(&opts)
 	}
 
@@ -68,9 +64,9 @@ func (s *GitSource) Commits(options ...func(*Options)) *GitSource {
 	return s
 }
 
-func (s *GitSource) References(options ...func(*Options)) *GitSource {
-	opts := Options{}
-	for _, option := range options {
+func (s *GitSource) References(o ...func(*options.Config)) *GitSource {
+	opts := options.Config{}
+	for _, option := range o {
 		option(&opts)
 	}
 
@@ -78,9 +74,9 @@ func (s *GitSource) References(options ...func(*Options)) *GitSource {
 	return s
 }
 
-func (s *GitSource) Trees(options ...func(*Options)) *GitSource {
-	opts := Options{}
-	for _, option := range options {
+func (s *GitSource) Trees(o ...func(*options.Config)) *GitSource {
+	opts := options.Config{}
+	for _, option := range o {
 		option(&opts)
 	}
 

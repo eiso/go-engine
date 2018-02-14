@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/chrislusf/gleam/gio"
+	"github.com/eiso/go-engine/options"
 	"github.com/eiso/go-engine/source"
 	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
@@ -61,7 +62,7 @@ func (s *shardInfo) ReadSplit() error {
 	temp := make(map[string]source.SourceReaders)
 
 	//TODO Need to still add options to repositories base source
-	emptyOptions := Options{}
+	emptyOptions := &options.Config{}
 	reposReader, err := s.NewReader(s.DataType, repo, s.RepoPath, emptyOptions, nil)
 	if err != nil {
 		return errors.Wrapf(err, "could not read repository %s", s.RepoPath)
@@ -73,7 +74,7 @@ func (s *shardInfo) ReadSplit() error {
 	// the overhead of building the readers twice is limited
 	// but necessary for chained itteration
 	for source, options := range s.NestedSource {
-		r, err := s.NewReader(source, repo, s.RepoPath, options, nil)
+		r, err := s.NewReader(source, repo, s.RepoPath, &options, nil)
 		if err == io.EOF {
 			return nil
 		}
@@ -95,7 +96,7 @@ func (s *shardInfo) ReadSplit() error {
 	var nameDeepestSource string
 
 	for source, options := range s.NestedSource {
-		r, err := s.NewReader(source, repo, s.RepoPath, options, temp)
+		r, err := s.NewReader(source, repo, s.RepoPath, &options, temp)
 		if err != nil {
 			return errors.Wrap(err, "could not read references")
 		}

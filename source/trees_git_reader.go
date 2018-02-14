@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"github.com/chrislusf/gleam/util"
+	"github.com/eiso/go-engine/options"
 	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -20,23 +21,16 @@ type Trees struct {
 	commits      *util.Row
 
 	readers map[string]SourceReaders
-	options *Options
+	options *options.Config
 }
 
-func NewTrees(repo *git.Repository, path string, options *Options, readers map[string]SourceReaders) (*Trees, error) {
+func NewTrees(repo *git.Repository, path string, options *options.Config, readers map[string]SourceReaders) (*Trees, error) {
 	reader := &Trees{repositoryID: path,
 		repo:    repo,
 		options: options,
 		readers: readers,
 	}
 	return reader, nil
-}
-
-func NewTreesOptions(a map[int][]string, b bool) (*Options, error) {
-	return &Options{
-		filter:  a,
-		reverse: b,
-	}, nil
 }
 
 func (r *Trees) ReadHeader() ([]string, error) {

@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"github.com/chrislusf/gleam/util"
+	"github.com/eiso/go-engine/options"
 	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
 )
@@ -14,22 +15,15 @@ type Repositories struct {
 	pos          int
 
 	readers map[string]SourceReaders
-	options *Options
+	options *options.Config
 }
 
-func NewRepositories(repo *git.Repository, path string, options *Options, readers map[string]SourceReaders) (*Repositories, error) {
+func NewRepositories(repo *git.Repository, path string, opts *options.Config, readers map[string]SourceReaders) (*Repositories, error) {
 	return &Repositories{
 		repos:        &reposIter{repos: []*git.Repository{repo}},
 		repositoryID: path,
 		readers:      readers,
-		options:      options,
-	}, nil
-}
-
-func NewRepositoriesOptions(a map[int][]string, b bool) (*Options, error) {
-	return &Options{
-		filter:  a,
-		reverse: b,
+		options:      opts,
 	}, nil
 }
 

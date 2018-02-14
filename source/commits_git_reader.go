@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"github.com/chrislusf/gleam/util"
+	"github.com/eiso/go-engine/options"
 	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -19,13 +20,13 @@ type Commits struct {
 	references   *util.Row
 
 	readers map[string]SourceReaders
-	options *Options
+	options *options.Config
 }
 
-func NewCommits(repo *git.Repository, path string, options *Options, readers map[string]SourceReaders) (*Commits, error) {
+func NewCommits(repo *git.Repository, path string, opts *options.Config, readers map[string]SourceReaders) (*Commits, error) {
 	reader := &Commits{repositoryID: path,
 		repo:    repo,
-		options: options,
+		options: opts,
 		readers: readers,
 	}
 
@@ -40,13 +41,6 @@ func NewCommits(repo *git.Repository, path string, options *Options, readers map
 	}
 
 	return reader, nil
-}
-
-func NewCommitsOptions(a map[int][]string, b bool) (*Options, error) {
-	return &Options{
-		filter:  a,
-		reverse: b,
-	}, nil
 }
 
 func (r *Commits) ReadHeader() ([]string, error) {
