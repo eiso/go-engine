@@ -8,9 +8,9 @@ VOLUME /data
 
 WORKDIR /data
 
-COPY driver /usr/bin/
-COPY docker/entrypoint_driver.sh /entrypoint_driver.sh
+COPY multitool /usr/bin/
+COPY docker/entrypoint_multitool.sh /entrypoint_multitool.sh
 
-RUN chmod +x /entrypoint_driver.sh
+RUN chmod +x /entrypoint_multitool.sh
 
-ENTRYPOINT ["/entrypoint_driver.sh"]
+ENTRYPOINT ["/entrypoint_multitool.sh"]

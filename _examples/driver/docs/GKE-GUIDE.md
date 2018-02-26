@@ -19,15 +19,16 @@ export PATH=$PATH:/opt/google-cloud-sdk
 ### Build the necessary binaries
 Be sure to update the registry address in the dockerfiles.
  
-In case you're only changing the driver code (`examples/git/git_example.go`) you only need to update `Dockerfile.driver`
+In case you're only changing the driver code (`_examples/driver/driver.go`) you only need to update `Dockerfile.driver`
 
 ```
-cd ~/go/src/github.com/chrislusf/gleam/docker/
+cd go-engine/_examples/driver/docker/
 vim Dockerfile.gleam
 vim Dockerfile.driver
 ``` 
 
 ```
+cd ../
 make clean
 make docker
 ```
@@ -41,10 +42,6 @@ gcloud container clusters get-credentials gleam
 gcloud container clusters list
 ```
 
-```
-cd ~/go/src/github.com/chrislusf/gleam/
-```
-
 bash:
 ```
 kubectl config set-context $(kubectl config current-context) --namespace=gleam
@@ -53,6 +50,11 @@ fish:
 ```
 kubectl config set-context (kubectl config current-context) --namespace=gleam
 ```
+
+```
+cd _examples/driver/
+```
+
 Now apply the k8s configuration files already provided:
 ```
 kubectl apply -f k8s/
@@ -95,4 +97,10 @@ It can take up to several mintues for an external IP to be assigned to your load
 
 ```
 Go to: http://EXTERNAL-IP:45326
+```
+
+### SSH into a running pod
+
+```
+kubectl exec -it agent-786073843-zxjxj -- /bin/sh
 ```

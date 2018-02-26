@@ -9,5 +9,5 @@ spec:
       - name: driver-container
         image: eisokant/driver
         command: ["/usr/bin/driver"]
-        args: ["--onDocker", "--query=test", "/data"]
+        args: ["--onDocker", "--query=test", "--path=/data/siva/latest/"]
       restartPolicy: Never

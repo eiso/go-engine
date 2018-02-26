@@ -10,8 +10,8 @@ VOLUME /data
 
 COPY gleam /usr/bin/
 COPY driver /usr/bin/
-COPY entrypoint.sh /entrypoint.sh
+COPY docker/entrypoint_gleam.sh /entrypoint_gleam.sh
 
-RUN chmod +x /entrypoint.sh
+RUN chmod +x /entrypoint_gleam.sh
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint_gleam.sh"]

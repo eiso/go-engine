@@ -1,3 +1,4 @@
-_examples/driver/docker/driver
-_examples/driver/docker/driver-darwin
-_examples/driver/docker/gleam
+_examples/driver/driver
+_examples/driver/driver-darwin
+_examples/driver/gleam
+_examples/driver/multitool
