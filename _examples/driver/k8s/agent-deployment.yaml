@@ -23,9 +23,6 @@ spec:
       containers:
       - name: agent
         image: eisokant/gleam
-        volumeMounts:
-          - name: gleam-disk
-            mountPath: /data
         resources:
           limits:
             memory: "2Gi"
@@ -33,9 +30,5 @@ spec:
         args:
           - "agent"
           - "--memory=2048 --master=master:45326"
-      volumes:
-        - name: gleam-disk
-          gcePersistentDisk:
-            pdName: gleam-disk
-            fsType: ext4
+
 

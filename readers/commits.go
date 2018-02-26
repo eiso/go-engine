@@ -91,7 +91,11 @@ func (iter *commitsIterator) Next() (*object.Commit, error) {
 		return nil, err
 	}
 
-	refCommitHash := resolveRef(iter.repo, ref)
+	refCommitHash, err := resolveRef(iter.repo, ref)
+	if err != nil {
+		return nil, err
+	}
+
 	return iter.repo.CommitObject(refCommitHash)
 }
 
@@ -133,7 +137,11 @@ func (iter *allCommitsIterator) Next() (*object.Commit, error) {
 			return nil, err
 		}
 
-		refCommitHash := resolveRef(iter.repo, ref)
+		refCommitHash, err := resolveRef(iter.repo, ref)
+		if err != nil {
+			return nil, err
+		}
+
 		iter.commitsIter, err = iter.repo.Log(&git.LogOptions{From: refCommitHash})
 		if err != nil {
 			return nil, err

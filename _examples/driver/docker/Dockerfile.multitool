@@ -4,9 +4,7 @@ MAINTAINER Eiso Kant <eiso@sourced.tech>
 RUN mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
 RUN apk --update add git openssh curl
 
-VOLUME /data
-
-WORKDIR /data
+WORKDIR /tmp
 
 COPY multitool /usr/bin/
 COPY docker/entrypoint_multitool.sh /entrypoint_multitool.sh

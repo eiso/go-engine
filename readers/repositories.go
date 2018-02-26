@@ -2,6 +2,7 @@ package readers
 
 import (
 	"io"
+	"log"
 
 	"github.com/chrislusf/gleam/util"
 	"github.com/pkg/errors"
@@ -42,6 +43,8 @@ func (r *Repositories) Read() (*util.Row, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "could not list remotes")
 	}
+
+	log.Printf("LISTR: %v", listRemotes)
 
 	var remoteURLs []string
 	if len(listRemotes) > 0 {
