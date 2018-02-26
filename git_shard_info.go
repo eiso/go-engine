@@ -3,13 +3,24 @@ package git
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 	"io"
 	"log"
 	"os"
+	"path/filepath"
+	"strconv"
+	"time"
 
 	"github.com/chrislusf/gleam/gio"
 	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
+
+	core "gopkg.in/src-d/core-retrieval.v0"
+	"gopkg.in/src-d/core-retrieval.v0/repository"
+	"gopkg.in/src-d/go-billy-siva.v4"
+	"gopkg.in/src-d/go-billy.v4"
+	"gopkg.in/src-d/go-billy.v4/osfs"
+	"gopkg.in/src-d/go-git.v4/storage/filesystem"
 )
 
 var regMapperReadShard = gio.RegisterMapper(newReadShard)
@@ -22,6 +33,7 @@ type shardInfo struct {
 	// these fields are exported so gob encoding can see them.
 	Config     map[string]string
 	RepoPath   string
+	RepoType   string
 	DataType   string
 	HasHeader  bool
 	FilterRefs []string
@@ -53,9 +65,18 @@ func newReadShard(row []interface{}) error {
 func (s *shardInfo) ReadSplit() error {
 	log.Printf("reading %s from repo: %s", s.DataType, s.RepoPath)
 
-	repo, err := git.PlainOpen(s.RepoPath)
-	if err != nil {
-		return errors.Wrap(err, "could not open repo")
+	var repo *git.Repository
+	var err error
+	if s.RepoType == "standard" {
+		repo, err = git.PlainOpen(s.RepoPath)
+		if err != nil {
+			return errors.Wrap(err, "could not open git repository")
+		}
+	} else if s.RepoType == "siva" {
+		repo, err = readSiva(s.RepoPath)
+		if err != nil {
+			return errors.Wrap(err, "could not open siva repository")
+		}
 	}
 
 	reader, err := s.NewReader(repo, s.RepoPath, false)
@@ -83,4 +104,58 @@ func (s *shardInfo) ReadSplit() error {
 		}
 	}
 	return nil
+}
+
+// modified from: https://github.com/src-d/core-retrieval/blob/589b81070b58ffcbad230fb170e51ff1b66bc063/repository/repository.go#L54
+func readSiva(origPath string) (*git.Repository, error) {
+	size := len(origPath)
+	hash := origPath[size-5]
+
+	local, copier, err := rootedTransactioner()
+	if err != nil {
+		return nil, err
+	}
+
+	localPath := local.Join(
+		fmt.Sprintf("%s_%s", hash, strconv.FormatInt(time.Now().UnixNano(), 10)))
+	localSivaPath := filepath.Join(localPath, "siva")
+	localTmpPath := filepath.Join(localPath, "tmp")
+
+	if err := copier.CopyFromRemote(origPath, localSivaPath, local); err != nil {
+		return nil, err
+	}
+
+	tmpFs, err := local.Chroot(localTmpPath)
+	if err != nil {
+		return nil, err
+	}
+
+	fs, err := sivafs.NewFilesystem(local, localSivaPath, tmpFs)
+	if err != nil {
+		return nil, err
+	}
+
+	sto, err := filesystem.NewStorage(fs)
+	if err != nil {
+		return nil, err
+	}
+
+	repository, err := git.Open(sto, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return repository, nil
+}
+
+// modified from: https://github.com/src-d/borges/blob/6a951a7fb9bcba73a996522a92bc506814b3b11c/cli/borges/packer.go#L83
+func rootedTransactioner() (billy.Filesystem, repository.Copier, error) {
+	tmpFs, err := core.TemporaryFilesystem().Chroot("siva-temp")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	copier := repository.NewLocalCopier(osfs.New("/tmp"), 0)
+
+	return tmpFs, copier, nil
 }

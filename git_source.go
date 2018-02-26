@@ -65,19 +65,19 @@ func newGitRepositories(fsPath string, partitionCount int) *sourceRepositories {
 	}
 }
 
-// Find all repositories in the directory
-func (s *baseSource) gitRepos(folder string, out io.Writer, stats *pb.InstructionStat) error {
-	virtualFiles, err := filesystem.List(folder)
+// Find all standard & siva repositories in the directory
+func (s *baseSource) gitRepos(path string, out io.Writer, stats *pb.InstructionStat) error {
+	virtualFiles, err := filesystem.List(path)
 	if err != nil {
-		return fmt.Errorf("Failed to list folder %s: %v", folder, err)
+		return fmt.Errorf("Failed to list files in %s: %v", path, err)
 	}
 
 	for _, vf := range virtualFiles {
-		if !filesystem.IsDir(vf.Location) || strings.Contains(vf.Location, ".") {
+		if !filesystem.IsDir(vf.Location) && !s.isSivaFile(vf.Location) {
 			continue
 		}
 
-		if !s.isRepo(vf.Location) {
+		if !s.isStandardRepository(vf.Location) && !s.isSivaFile(vf.Location) {
 			err = s.gitRepos(vf.Location, out, stats)
 			if err != nil {
 				return err
@@ -85,9 +85,15 @@ func (s *baseSource) gitRepos(folder string, out io.Writer, stats *pb.Instructio
 			continue
 		}
 
+		repoType := "standard"
+		if s.isSivaFile(vf.Location) {
+			repoType = "siva"
+		}
+
 		stats.OutputCounter++
 		s := &shardInfo{
 			RepoPath:   vf.Location,
+			RepoType:   repoType,
 			DataType:   s.prefix,
 			HasHeader:  s.hasHeader,
 			FilterRefs: s.FilterRefs,
@@ -98,6 +104,7 @@ func (s *baseSource) gitRepos(folder string, out io.Writer, stats *pb.Instructio
 		if err != nil {
 			return errors.Wrap(err, "could not encode shard info")
 		}
+
 		if err := util.NewRow(util.Now(), b).WriteTo(out); err != nil {
 			return errors.Wrap(err, "could not encode row")
 		}
@@ -106,10 +113,18 @@ func (s *baseSource) gitRepos(folder string, out io.Writer, stats *pb.Instructio
 	return nil
 }
 
-func (s *baseSource) isRepo(path string) bool {
+func (s *baseSource) isStandardRepository(path string) bool {
 	p := filepath.Join(path, ".git")
 	_, err := filesystem.Open(p)
 	if err != nil {
+		return false
+	}
+	return true
+}
+
+func (s *baseSource) isSivaFile(path string) bool {
+	ext := filepath.Ext(path)
+	if ext != ".siva" {
 		return false
 	}
 	return true
@@ -127,18 +142,22 @@ func (s *baseSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 		if s.hasWildcard {
 			return s.gitRepos(s.folder, out, stats)
 		}
-
-		if !filesystem.IsDir(s.path) {
-			return errors.New("source can't be be a file")
+		if !filesystem.IsDir(s.path) && !s.isSivaFile(s.path) {
+			return fmt.Errorf("source can't be be a file: %s", s.path)
+		}
+		if !s.isStandardRepository(s.path) || s.isSivaFile(s.path) {
+			return s.gitRepos(s.path, out, stats)
 		}
 
-		if !s.isRepo(s.path) {
-			return s.gitRepos(s.path, out, stats)
+		repoType := "standard"
+		if s.isSivaFile(s.path) {
+			repoType = "siva"
 		}
 
 		stats.OutputCounter++
 		s := &shardInfo{
 			RepoPath:   s.path,
+			RepoType:   repoType,
 			DataType:   s.prefix,
 			HasHeader:  s.hasHeader,
 			FilterRefs: s.FilterRefs,

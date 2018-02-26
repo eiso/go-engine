@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -10,9 +11,9 @@ import (
 	"github.com/chrislusf/gleam/distributed"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/gio"
+
 	engine "github.com/eiso/go-engine"
 	"github.com/eiso/go-engine/utils"
-	"github.com/pkg/errors"
 )
 
 func main() {
@@ -25,16 +26,20 @@ func main() {
 
 	gio.Init()
 
-	var path = *pathPtr
-
-	log.Printf("analyzing %s", path)
-
-	start := time.Now()
-
 	if *query == "" {
 		fmt.Print("please provide a query e.g. --query=test")
 		os.Exit(0)
 	}
+
+	path := *pathPtr
+	if path == "." {
+		log.Print("analyzing the current directory, provide --path=/your/repos for a different path")
+	} else {
+		log.Printf("analyzing %s", path)
+	}
+
+	start := time.Now()
+
 	p, opts, err := queryExample(path, *query)
 	if err != nil {
 		fmt.Printf("could not load query: %s \n", err)
@@ -55,17 +60,7 @@ func main() {
 }
 
 var (
-	opts    []flow.FlowOption
-	regKey1 = gio.RegisterMapper(utils.ColumnToKey(1))
-	regKey2 = gio.RegisterMapper(utils.ColumnToKey(1))
-	regKey3 = gio.RegisterMapper(utils.ColumnToKey(3))
-
-	one = gio.RegisterMapper(func(x []interface{}) error {
-		return gio.Emit(1)
-	})
-	sum = gio.RegisterReducer(func(a, b interface{}) (interface{}, error) {
-		return a.(int64) + b.(int64), nil
-	})
+	opts []flow.FlowOption
 )
 
 func queryExample(path, query string) (*flow.Dataset, []flow.FlowOption, error) {
