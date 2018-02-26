@@ -24,7 +24,7 @@ deps:
 
 binaries: deps
 	CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o $(BINARY) $(SOURCE_DIR)
-	CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o $(BINARY_DRIVER) $(DRIVER_SOURCE_DIR)
+	CGO_ENABLED=0 go build -tags norwfs -a -ldflags '-extldflags "-static"' -o $(BINARY_DRIVER) $(DRIVER_SOURCE_DIR)
 	wget https://github.com/src-d/datasets/releases/download/v2/multitool.linux_amd64.gz
 	gunzip multitool.linux_amd64.gz
 	mv multitool.linux_amd64 $(BINARY_MULTITOOL)

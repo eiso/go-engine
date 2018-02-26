@@ -11,6 +11,8 @@ import (
 	storer "gopkg.in/src-d/go-git.v4/plumbing/storer"
 )
 
+var ErrRef = errors.New("unable to resolve reference")
+
 type References struct {
 	repositoryID string
 	repo         *git.Repository
@@ -49,7 +51,11 @@ func (r *References) Read() (*util.Row, error) {
 		return nil, err
 	}
 
-	refCommitHash := resolveRef(r.repo, ref)
+	refCommitHash, err := resolveRef(r.repo, ref)
+	if err != nil {
+		return nil, err
+	}
+
 	return util.NewRow(util.Now(),
 		r.repositoryID,
 		refCommitHash.String(),
@@ -127,11 +133,15 @@ func (iter *refIterator) Close() {}
 
 // Get correct commit hash
 // there is Repository.ResolveRevision but it fails on some tags and performance is worst
-func resolveRef(repo *git.Repository, ref *plumbing.Reference) plumbing.Hash {
+func resolveRef(repo *git.Repository, ref *plumbing.Reference) (plumbing.Hash, error) {
 	refCommitHash := ref.Hash()
+
 	// handle symbolic references like HEAD
 	if ref.Type() == plumbing.SymbolicReference {
-		targetRef, _ := repo.Reference(ref.Target(), true)
+		targetRef, err := repo.Reference(ref.Target(), true)
+		if err != nil {
+			return plumbing.NewHash(""), ErrRef
+		}
 		refCommitHash = targetRef.Hash()
 	}
 
@@ -142,5 +152,5 @@ func resolveRef(repo *git.Repository, ref *plumbing.Reference) plumbing.Hash {
 		refCommitHash = commit.Hash
 	}
 
-	return refCommitHash
+	return refCommitHash, nil
 }

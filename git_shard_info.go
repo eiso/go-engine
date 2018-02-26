@@ -12,14 +12,15 @@ import (
 	"time"
 
 	"github.com/chrislusf/gleam/gio"
+	"github.com/eiso/go-engine/readers"
 	"github.com/pkg/errors"
-	git "gopkg.in/src-d/go-git.v4"
 
 	core "gopkg.in/src-d/core-retrieval.v0"
 	"gopkg.in/src-d/core-retrieval.v0/repository"
-	"gopkg.in/src-d/go-billy-siva.v4"
+	sivafs "gopkg.in/src-d/go-billy-siva.v4"
 	"gopkg.in/src-d/go-billy.v4"
 	"gopkg.in/src-d/go-billy.v4/osfs"
+	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/storage/filesystem"
 )
 
@@ -75,6 +76,7 @@ func (s *shardInfo) ReadSplit() error {
 	} else if s.RepoType == "siva" {
 		repo, err = readSiva(s.RepoPath)
 		if err != nil {
+			log.Printf("Could not open: %s - %s", s.RepoPath, err)
 			return errors.Wrap(err, "could not open siva repository")
 		}
 	}
@@ -94,6 +96,8 @@ func (s *shardInfo) ReadSplit() error {
 		row, err := reader.Read()
 		if err == io.EOF {
 			return nil
+		} else if err == readers.ErrRef {
+			continue
 		} else if err != nil {
 			return errors.Wrap(err, "could not get next file")
 		}
@@ -106,43 +110,40 @@ func (s *shardInfo) ReadSplit() error {
 	return nil
 }
 
-// modified from: https://github.com/src-d/core-retrieval/blob/589b81070b58ffcbad230fb170e51ff1b66bc063/repository/repository.go#L54
 func readSiva(origPath string) (*git.Repository, error) {
-	size := len(origPath)
-	hash := origPath[size-5]
 
 	local, copier, err := rootedTransactioner()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "unable to create a rooted transactioner")
 	}
 
 	localPath := local.Join(
-		fmt.Sprintf("%s_%s", hash, strconv.FormatInt(time.Now().UnixNano(), 10)))
+		fmt.Sprintf("%s_%s", origPath, strconv.FormatInt(time.Now().UnixNano(), 10)))
 	localSivaPath := filepath.Join(localPath, "siva")
 	localTmpPath := filepath.Join(localPath, "tmp")
 
 	if err := copier.CopyFromRemote(origPath, localSivaPath, local); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "unable to copy from remote")
 	}
 
 	tmpFs, err := local.Chroot(localTmpPath)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "unable to set the local path to the temp filesystem")
 	}
 
 	fs, err := sivafs.NewFilesystem(local, localSivaPath, tmpFs)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "unable to create a siva filesystem")
 	}
 
 	sto, err := filesystem.NewStorage(fs)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "unable to create a new storage backend")
 	}
 
 	repository, err := git.Open(sto, nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "unable to open the git repository")
 	}
 
 	return repository, nil
@@ -154,8 +155,7 @@ func rootedTransactioner() (billy.Filesystem, repository.Copier, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-
-	copier := repository.NewLocalCopier(osfs.New("/tmp"), 0)
+	copier := repository.NewLocalCopier(osfs.New(""), 0)
 
 	return tmpFs, copier, nil
 }

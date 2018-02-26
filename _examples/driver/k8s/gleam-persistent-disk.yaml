@@ -1,11 +1,10 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: gleam-disk
-  namespace: gleam
+  name: gleam-disk-volume
 spec:
   capacity:
-    storage: 2700Gi
+    storage: 3000Gi
   accessModes:
     - ReadWriteOnce
   gcePersistentDisk:

@@ -19,7 +19,11 @@ type reader interface {
 
 func (ds *shardInfo) NewReader(r *git.Repository, path string, flag bool) (reader, error) {
 	if ds.DataType == "repositories" {
-		return readers.NewRepositories(r, path)
+		repoReader, err := readers.NewRepositories(r, path)
+		if err != nil {
+			return nil, err
+		}
+		return repoReader, nil
 	}
 
 	refsReader, err := readers.NewReferences(r, path, ds.FilterRefs)

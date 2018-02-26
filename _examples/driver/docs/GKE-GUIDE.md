@@ -70,6 +70,21 @@ kubectl get events
 kubectl describe pod master
 ```
 
+### Load the Public Git Archive dataset with multitool
+
+```
+kubectl create -f k8s/jobs/multitool-job.yaml 
+# kubectl delete job multitool
+```
+
+Inspect if it is running successfully: 
+
+```
+kubectl describe job multitool
+kubectl get pods
+kubectl describe pods multitool-jw4mx
+```
+
 ### Execute the driver as a job
 
 In k8s jobs run till completion. An example of a job running a query on the driver is in `k8s/jobs/driver-job.yaml`
@@ -99,8 +114,16 @@ It can take up to several mintues for an external IP to be assigned to your load
 Go to: http://EXTERNAL-IP:45326
 ```
 
-### SSH into a running pod
+### Other
+
+#### SSH into a running pod
 
 ```
 kubectl exec -it agent-786073843-zxjxj -- /bin/sh
+```
+
+### Describe the persistent disk
+
+```
+gcloud compute disks describe gleam-disk
 ```

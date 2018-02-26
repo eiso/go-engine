@@ -9,4 +9,14 @@ spec:
       - name: multitool-container
         image: eisokant/multitool
         args: ["download-dataset"]
+        volumeMounts:
+        - name: gleam-disk-volume
+          mountPath: /data
+
       restartPolicy: Never
+
+      volumes:
+          - name: gleam-disk-volume
+            gcePersistentDisk:
+              pdName: gleam-disk
+              fsType: ext4
