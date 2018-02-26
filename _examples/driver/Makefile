@@ -19,6 +19,8 @@ clean:
 deps:
 	go get $(GO_FLAGS) -d $(SOURCE_DIR)
 	go get $(GO_FLAGS) -d $(DRIVER_SOURCE_DIR)
+	dep ensure
+	cp -R $(GOPATH)/src/github.com/chrislusf/gleam/distributed/ ../../vendor/github.com/chrislusf/gleam/
 
 binaries: deps
 	CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o $(BINARY) $(SOURCE_DIR)
