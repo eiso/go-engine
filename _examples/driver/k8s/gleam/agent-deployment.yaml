@@ -30,5 +30,10 @@ spec:
         args:
           - "agent"
           - "--memory=2048 --master=master:45326"
-
-
+        volumeMounts:
+        - name: gleam-data
+          mountPath: /data
+      volumes:
+          - name: gleam-data
+            persistentVolumeClaim:
+              claimName: gleam-pvc

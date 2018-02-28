@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: gleam-pv
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 3000Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: gleam-pvc
+    namespace: gleam
+  gcePersistentDisk:
+    fsType: ext4
+    pdName: gleam-pv-disk
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: standard
+

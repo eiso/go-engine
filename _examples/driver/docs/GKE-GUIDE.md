@@ -51,26 +51,33 @@ fish:
 kubectl config set-context (kubectl config current-context) --namespace=gleam
 ```
 
+Apply the gleam namespace
+
 ```
-cd _examples/driver/
+kubectl apply -f k8s/gleam-namespace.yaml
 ```
 
-Now apply the k8s configuration files already provided:
 ```
-kubectl apply -f k8s/
+kubectl config view | grep namespace:
+
 ```
 
 In case you see an error: `namespaces "gleam" not found`. Run the above command again, sometimes GCP takes a bit of time to propogate the namespaces.
 
-Inspect the pods created if you encounter any errors:
+### Load the Public Git Archive dataset with multitool
+
+Creates a 3TB persistent volume and a persistent volume claim that can only be written too by one pod/job:
+
 ```
-kubectl config view | grep namespace:
-kubectl get pods
-kubectl get events
-kubectl describe pod master
+gcloud compute disks create gleam-pv-disk --size 3000 --type pd-standard
+gcloud compute disks describe gleam-pv-disk
 ```
 
-### Load the Public Git Archive dataset with multitool
+```
+kubectl apply -f k8s/dataset/
+```
+
+Creates the job that will download the data:
 
 ```
 kubectl create -f k8s/jobs/multitool-job.yaml 
@@ -83,6 +90,51 @@ Inspect if it is running successfully:
 kubectl describe job multitool
 kubectl get pods
 kubectl describe pods multitool-jw4mx
+```
+
+Removes the persistent volume claim from the disk
+
+```
+kubectl delete pvc gleam-pvc
+```
+
+Patches the persistent volume to be read only by multiple pods and removes the binding to the specif uid to free it up:
+
+```
+kubectl patch pv gleam-pv --patch "spec:
+    accessModes:
+      - ReadOnlyMany
+    claimRef:
+      uid:"
+```
+
+### Setting up gleam
+
+Now apply the k8s configuration files already provided:
+
+```
+kubectl apply -f k8s/gleam/
+```
+
+Inspect the pods created if you encounter any errors:
+
+```
+kubectl get pods
+kubectl get events
+kubectl describe pod master
+```
+
+#### Launch the gleam web-ui 
+```
+kubectl expose deployment master --type=LoadBalancer --name=web-ui
+kubectl describe services web-ui
+kubectl get services web-ui
+```
+
+If you see `EXTERNAL IP <pending>`, know that it can take up to several mintues for an external IP to be assigned to your load balancer.
+
+```
+Go to: http://EXTERNAL-IP:45326
 ```
 
 ### Execute the driver as a job
@@ -98,20 +150,9 @@ See if the driver ran successfully:
 ```
 kubectl get jobs
 kubectl describe job driver
+kubectl describe pods driver-gq4k8
 kubectl logs driver-gq4k8
-```
-
-#### Launch the gleam web-ui 
-```
-kubectl expose deployment master --type=LoadBalancer --name=web-ui
-kubectl get services web-ui
-kubectl describe services web-ui
-```
-
-It can take up to several mintues for an external IP to be assigned to your load balancer.
-
-```
-Go to: http://EXTERNAL-IP:45326
+kubectl get pods
 ```
 
 ### Other
@@ -120,10 +161,4 @@ Go to: http://EXTERNAL-IP:45326
 
 ```
 kubectl exec -it agent-786073843-zxjxj -- /bin/sh
-```
-
-### Describe the persistent disk
-
-```
-gcloud compute disks describe gleam-disk
 ```
