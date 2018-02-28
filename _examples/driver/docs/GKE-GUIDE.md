@@ -93,6 +93,18 @@ kubectl describe pods pga-jw4mx
 kubectl logs pga-jw4mx
 ```
 
+To see how much data has already been downloaded:
+
+```
+kubectl exec -it pga-52bl8 -- du -h /data | tail -1
+```
+
+To count the # of repositories downloaded:
+
+```
+kubectl exec -it pga-52bl8 -- find /data -type f | wc -l
+```
+
 Removes the persistent volume claim from the disk
 
 ```
