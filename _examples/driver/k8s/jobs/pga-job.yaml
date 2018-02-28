@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job 
+metadata:
+  name: pga
+  namespace: gleam
+spec:
+  template:
+    spec:
+      volumes:
+      - name: gleam-data
+        persistentVolumeClaim:
+          claimName: gleam-pvc
+      containers:
+      - name: pga-container
+        image: eisokant/pga
+        args: ["download-dataset"]
+        volumeMounts:
+        - name: gleam-data
+          mountPath: /data
+          
+      restartPolicy: Never

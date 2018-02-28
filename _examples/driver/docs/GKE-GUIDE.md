@@ -64,7 +64,7 @@ kubectl config view | grep namespace:
 
 In case you see an error: `namespaces "gleam" not found`. Run the above command again, sometimes GCP takes a bit of time to propogate the namespaces.
 
-### Load the Public Git Archive dataset with multitool
+### Load the Public Git Archive dataset with pga
 
 Creates a 3TB persistent volume and a persistent volume claim that can only be written too by one pod/job:
 
@@ -80,17 +80,17 @@ kubectl apply -f k8s/dataset/
 Creates the job that will download the data:
 
 ```
-kubectl create -f k8s/jobs/multitool-job.yaml 
-# kubectl delete job multitool
+kubectl create -f k8s/jobs/pga-job.yaml 
+# kubectl delete job pga
 ```
 
 Inspect if it is running successfully: 
 
 ```
-kubectl describe job multitool
+kubectl describe job pga
 kubectl get pods
-kubectl describe pods multitool-jw4mx
-kubectl logs multitool-jw4mx
+kubectl describe pods pga-jw4mx
+kubectl logs pga-jw4mx
 ```
 
 Removes the persistent volume claim from the disk

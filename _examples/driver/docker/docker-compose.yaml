@@ -19,3 +19,6 @@ services:
     command: 'agent --memory=3000 --master=master:45326'
     depends_on: 
      - master
+  pga:
+    image: eisokant/pga
+    command: 'download-dataset'
