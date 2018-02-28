@@ -90,6 +90,7 @@ Inspect if it is running successfully:
 kubectl describe job multitool
 kubectl get pods
 kubectl describe pods multitool-jw4mx
+kubectl logs multitool-jw4mx
 ```
 
 Removes the persistent volume claim from the disk
@@ -122,6 +123,18 @@ Inspect the pods created if you encounter any errors:
 kubectl get pods
 kubectl get events
 kubectl describe pod master
+```
+
+```
+# kubectl get deployments
+# kubectl delete deployment master
+# kubectl delete deployment agent
+# kubectl get services
+# kubectl delete service master
+# kubectl get pvc
+# kubectl delete pvc gleam-pvc
+# kubectl get pv
+# kubectl delete pvc gleam-pv
 ```
 
 #### Launch the gleam web-ui 
