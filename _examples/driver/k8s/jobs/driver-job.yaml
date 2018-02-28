@@ -2,12 +2,23 @@ apiVersion: batch/v1
 kind: Job 
 metadata:
   name: driver
+  namespace: gleam
 spec:
   template:
     spec:
+      volumes:
+      - name: gleam-data
+        persistentVolumeClaim:
+          claimName: gleam-pvc
       containers:
       - name: driver-container
         image: eisokant/driver
         command: ["/usr/bin/driver"]
         args: ["--onDocker", "--query=test", "--path=/data/siva/latest/"]
+        volumeMounts:
+        - name: gleam-data
+          mountPath: /data
+          
       restartPolicy: Never
+
+

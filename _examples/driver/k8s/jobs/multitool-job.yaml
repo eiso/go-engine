@@ -2,21 +2,20 @@ apiVersion: batch/v1
 kind: Job 
 metadata:
   name: multitool
+  namespace: gleam
 spec:
   template:
     spec:
+      volumes:
+      - name: gleam-data
+        persistentVolumeClaim:
+          claimName: gleam-pvc
       containers:
       - name: multitool-container
         image: eisokant/multitool
         args: ["download-dataset"]
         volumeMounts:
-        - name: gleam-disk-volume
+        - name: gleam-data
           mountPath: /data
-
+          
       restartPolicy: Never
-
-      volumes:
-          - name: gleam-disk-volume
-            gcePersistentDisk:
-              pdName: gleam-disk
-              fsType: ext4
