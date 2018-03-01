@@ -6,19 +6,21 @@ services:
     command: "master"
   agent_1:
     image: eisokant/gleam
-    command: 'agent --memory=3000 --master=master:45326'
+    command: 'agent --memory=1500 --master=master:45326'
     depends_on: 
      - master
   agent_2:
     image: eisokant/gleam
-    command: 'agent --memory=3000 --master=master:45326'
+    command: 'agent --memory=1500 --master=master:45326'
     depends_on: 
      - master
   agent_3:
     image: eisokant/gleam
-    command: 'agent --memory=3000 --master=master:45326'
+    command: 'agent --memory=1500 --master=master:45326'
     depends_on: 
      - master
-  pga:
-    image: eisokant/pga
-    command: 'download-dataset'
+  driver:
+    image: eisokant/driver
+    command: 'tail -f /dev/null'
+    depends_on: 
+     - master

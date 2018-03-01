@@ -1,4 +1,4 @@
-## Guide for distributed gleam on Google Cloud Kubernetes Engine
+## Guide for running a distributed go-engine analyzing the Public Git Archive dataset using the Google Cloud Kubernetes Engine
 
 ### Local instructions for setting up kubectl 
 
@@ -16,7 +16,7 @@ bash:
 export PATH=$PATH:/opt/google-cloud-sdk
 ```
 
-### Build the necessary binaries
+### Build the necessary binaries & docker containers
 Be sure to update the registry address in the dockerfiles.
  
 In case you're only changing the driver code (`_examples/driver/driver.go`) you only need to update `Dockerfile.driver`
@@ -77,7 +77,7 @@ gcloud compute disks describe gleam-pv-disk
 kubectl apply -f k8s/dataset/
 ```
 
-Creates the job that will download the data:
+Creates the job that will download the data (~8h30 hours to download the dataset):
 
 ```
 kubectl create -f k8s/jobs/pga-job.yaml 
@@ -99,7 +99,7 @@ To see how much data has already been downloaded:
 kubectl exec -it pga-52bl8 -- du -h /data | tail -1
 ```
 
-To count the # of repositories downloaded:
+To count the # of repositories while downloading:
 
 ```
 kubectl exec -it pga-52bl8 -- find /data -type f | wc -l
@@ -118,10 +118,34 @@ kubectl patch pv gleam-pv --patch "spec:
     accessModes:
       - ReadOnlyMany
     claimRef:
-      uid:"
+      uid:
+      resourceVersion:"
+```
+
+```
+gcloud compute instances detach-disk gke-gleam-default-pool-d58b1f3f-zgw3 --disk gleam-pv-disk
+```
+
+#### Optional
+
+Now create a snapshot of the disk:
+
+```
+gcloud compute disks snapshot gleam-pv-disk
+```
+
+Create a second disk from this snapshot:
+
+```
+gcloud compute disks create gleam-pv-disk-clone \
+  --source-snapshot=h5nendogj502
 ```
 
 ### Setting up gleam
+
+```
+gcloud compute instances detach-disk gke-gleam-default-pool-d58b1f3f-zgw3 --disk gleam-pv-disk
+```
 
 Now apply the k8s configuration files already provided:
 
@@ -146,7 +170,7 @@ kubectl describe pod master
 # kubectl get pvc
 # kubectl delete pvc gleam-pvc
 # kubectl get pv
-# kubectl delete pvc gleam-pv
+# kubectl delete pv gleam-pv
 ```
 
 #### Launch the gleam web-ui 
@@ -187,3 +211,5 @@ kubectl get pods
 ```
 kubectl exec -it agent-786073843-zxjxj -- /bin/sh
 ```
+
+gcloud compute instances detach-disk gke-gleam-default-pool-d58b1f3f-zgw3 --disk gleam-pv-disk

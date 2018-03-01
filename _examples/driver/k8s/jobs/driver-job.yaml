@@ -10,6 +10,7 @@ spec:
       - name: gleam-data
         persistentVolumeClaim:
           claimName: gleam-pvc
+          readOnly: true
       containers:
       - name: driver-container
         image: eisokant/driver
@@ -20,5 +21,3 @@ spec:
           mountPath: /data
           
       restartPolicy: Never
-
-

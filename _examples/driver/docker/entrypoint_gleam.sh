@@ -7,7 +7,7 @@ case "$1" in
 	;;
 
   'agent')
-  	ARGS="--host=`hostname -i`  --dir=/data"
+  	ARGS="--host=`hostname -i`  --dir=/tmp"
   	exec /usr/bin/gleam $@ $ARGS
 	;;
 

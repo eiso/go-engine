@@ -34,6 +34,7 @@ spec:
         - name: gleam-data
           mountPath: /data
       volumes:
-          - name: gleam-data
-            persistentVolumeClaim:
-              claimName: gleam-pvc
+        - name: gleam-data
+          persistentVolumeClaim:
+            claimName: gleam-pvc
+            readOnly: true
