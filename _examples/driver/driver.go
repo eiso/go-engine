@@ -69,7 +69,7 @@ func queryExample(path, query string) (*flow.Dataset, []flow.FlowOption, error) 
 
 	switch query {
 	case "test":
-		p = f.Read(engine.Repositories(path, 1))
+		p = f.Read(engine.Repositories(path, 2))
 	default:
 		return nil, nil, errors.New("this query is not implemented")
 	}

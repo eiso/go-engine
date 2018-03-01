@@ -38,6 +38,10 @@
   version = "4.1.0"
 
 [[constraint]]
+  branch = "readonly"
+  name = "github.com/eiso/go-billy-siva"
+
+[[constraint]]
   name = "gopkg.in/src-d/go-git.v4"
   version = "4.1.1"
 

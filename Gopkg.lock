@@ -67,6 +67,12 @@
   version = "v1.1.0"
 
 [[projects]]
+  branch = "readonly"
+  name = "github.com/eiso/go-billy-siva"
+  packages = ["."]
+  revision = "ce15101af9139205de706ed242865bcae8c9277d"
+
+[[projects]]
   branch = "master"
   name = "github.com/glycerine/truepack"
   packages = ["msgp"]
@@ -270,12 +276,6 @@
   version = "v1.6.3"
 
 [[projects]]
-  name = "gopkg.in/src-d/go-billy-siva.v4"
-  packages = ["."]
-  revision = "593006c4c2ffd1bbf7b54f4a9cd2beb00c68054c"
-  version = "v4.1.0"
-
-[[projects]]
   name = "gopkg.in/src-d/go-billy.v4"
   packages = [
     ".",
@@ -357,6 +357,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9b28bd89b8e4c7efaee6f28758a91aaeda95d8b2e312d8069ffb6d63b898b5a6"
+  inputs-digest = "06cf74428bc7d9592f781842524a2787b0359f463ba8f8d28ed85ed6cab1110d"
   solver-name = "gps-cdcl"
   solver-version = 1
