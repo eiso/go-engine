@@ -8,7 +8,7 @@ EXPOSE 45326
 
 VOLUME /tmp
 
-ENV PATH=".:${PATH}"
+ENV PATH="${PATH}:."
 
 COPY gleam /usr/bin/
 COPY docker/entrypoint_gleam.sh /entrypoint_gleam.sh

@@ -40,7 +40,7 @@ docker: binaries
 	docker build -f docker/Dockerfile.pga -t eisokant/pga .
 	docker push eisokant/pga
 
-job:
+driver:
 	go clean $(DRIVER_SOURCE_DIR)
 	rm -f $(BINARY_DRIVER)
 	go get $(GO_FLAGS) -d $(DRIVER_SOURCE_DIR)

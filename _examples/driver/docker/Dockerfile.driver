@@ -6,11 +6,12 @@ RUN apk --update add git openssh curl
 
 VOLUME /data
 
-WORKDIR /data
+WORKDIR /
 
-COPY driver /usr/bin/
+COPY driver /driver
+RUN chmod +x /driver
+
 COPY docker/entrypoint_driver.sh /entrypoint_driver.sh
-
 RUN chmod +x /entrypoint_driver.sh
 
 ENTRYPOINT ["/entrypoint_driver.sh"]
