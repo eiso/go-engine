@@ -12,7 +12,7 @@ import (
 	"github.com/eiso/go-engine/readers"
 	"github.com/pkg/errors"
 
-	sivafs "gopkg.in/src-d/go-billy-siva.v4"
+	sivafs "github.com/eiso/go-billy-siva"
 	"gopkg.in/src-d/go-billy.v4/memfs"
 	"gopkg.in/src-d/go-billy.v4/osfs"
 	git "gopkg.in/src-d/go-git.v4"
