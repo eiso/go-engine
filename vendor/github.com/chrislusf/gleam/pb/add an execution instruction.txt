@@ -1,0 +1,23 @@
+Here are steps to add one execution instruction
+
+Taking adding InputSplitReader as example:
+
+1. Add this to gleam.proto
+
+    message Instruction {
+        ...
+
+	    message InputSplitReader {
+	        required string inputType = 1;
+	    }
+        optional InputSplitReader inputSplitReader = 10;
+
+    }
+
+2. generate protobuf files
+
+    make
+
+
+3. in github.com/chrislusf/gleam/instruction
+	add an instruction following the Instruction interface.
