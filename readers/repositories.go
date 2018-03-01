@@ -2,10 +2,8 @@ package readers
 
 import (
 	"io"
-	"log"
 
 	"github.com/chrislusf/gleam/util"
-	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
 )
 
@@ -37,26 +35,26 @@ func (r *Repositories) Read() (*util.Row, error) {
 		return nil, err
 	}
 
-	//TODO: check the remotes list results against results from native git
-	// for repositories with many remotes, right now it only goes on [0]
-	listRemotes, err := repository.Remotes()
-	if err != nil {
-		return nil, errors.Wrap(err, "could not list remotes")
-	}
+	// TODO: split remotes properly, for siva into seperate repos
+	// listRemotes, err := repository.Remotes()
+	// if err != nil {
+	// 	return nil, errors.Wrap(err, "could not list remotes")
+	// }
 
-	log.Printf("LISTR: %v", listRemotes)
+	// log.Printf("Log remotes: %v", listRemotes)
+	// for k, _ := range listRemotes {
+	// 	listRemotes[k].Config().Name
+	// 	listRemotes[k].Config().URLs
+	// 	listRemotes[k].Config().Fetch
+	// }
 
-	var remoteURLs []string
-	if len(listRemotes) > 0 {
-		remoteURLs = listRemotes[0].Config().URLs
-	}
-
+	var headHash string
 	head, err := repository.Head()
-	if err != nil {
-		return nil, errors.Wrap(err, "could not get head from repository")
+	if err == nil {
+		headHash = head.Hash().String()
 	}
 
-	return util.NewRow(util.Now(), r.repositoryID, head.Hash().String(), remoteURLs), nil
+	return util.NewRow(util.Now(), r.repositoryID, headHash), nil
 }
 
 type reposIter struct {

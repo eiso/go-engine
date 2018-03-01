@@ -8,6 +8,7 @@ This library is currently a learning project that implements the [source{d} engi
 The heavy lifting of working with Git repositories is done by [go-git](https://github.com/src-d/go-git).
 
 ### To-do
+- [ ] Split remotes properly in the repositories reader; for siva into seperate repos
 - [ ] Implement the [queries from QuerySetApp](https://github.com/mcarmonaa/QuerySetApp/blob/master/src/main/scala/tech/sourced/queryset/SourcedQueries.scala#L26)
 - [ ] Generalize the filter function
 - [ ] Improve the siva reading to turn rooted repositories into individual ones
