@@ -37,7 +37,7 @@ make docker
 
 ```
 # gcloud container clusters delete gleam
-gcloud container clusters create gleam
+gcloud container clusters create gleam --num-nodes=4
 gcloud container clusters get-credentials gleam
 gcloud container clusters list
 ```

@@ -3,22 +3,17 @@ package git
 import (
 	"bytes"
 	"encoding/gob"
-	"fmt"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
-	"time"
 
 	"github.com/chrislusf/gleam/gio"
 	"github.com/eiso/go-engine/readers"
 	"github.com/pkg/errors"
 
-	core "gopkg.in/src-d/core-retrieval.v0"
-	"gopkg.in/src-d/core-retrieval.v0/repository"
 	sivafs "gopkg.in/src-d/go-billy-siva.v4"
-	"gopkg.in/src-d/go-billy.v4"
+	"gopkg.in/src-d/go-billy.v4/memfs"
 	"gopkg.in/src-d/go-billy.v4/osfs"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/storage/filesystem"
@@ -111,27 +106,12 @@ func (s *shardInfo) ReadSplit() error {
 }
 
 func readSiva(origPath string) (*git.Repository, error) {
+	local := osfs.New(filepath.Dir(origPath))
+	tmpFs := memfs.New()
 
-	local, copier, err := rootedTransactioner()
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to create a rooted transactioner")
-	}
+	origPath = filepath.Base(origPath)
 
-	localPath := local.Join(
-		fmt.Sprintf("%s_%s", origPath, strconv.FormatInt(time.Now().UnixNano(), 10)))
-	localSivaPath := filepath.Join(localPath, "siva")
-	localTmpPath := filepath.Join(localPath, "tmp")
-
-	if err := copier.CopyFromRemote(origPath, localSivaPath, local); err != nil {
-		return nil, errors.Wrap(err, "unable to copy from remote")
-	}
-
-	tmpFs, err := local.Chroot(localTmpPath)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to set the local path to the temp filesystem")
-	}
-
-	fs, err := sivafs.NewFilesystem(local, localSivaPath, tmpFs)
+	fs, err := sivafs.NewFilesystem(local, origPath, tmpFs)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create a siva filesystem")
 	}
@@ -141,21 +121,10 @@ func readSiva(origPath string) (*git.Repository, error) {
 		return nil, errors.Wrap(err, "unable to create a new storage backend")
 	}
 
-	repository, err := git.Open(sto, nil)
+	repository, err := git.Open(sto, tmpFs)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to open the git repository")
 	}
 
 	return repository, nil
-}
-
-// modified from: https://github.com/src-d/borges/blob/6a951a7fb9bcba73a996522a92bc506814b3b11c/cli/borges/packer.go#L83
-func rootedTransactioner() (billy.Filesystem, repository.Copier, error) {
-	tmpFs, err := core.TemporaryFilesystem().Chroot("siva-temp")
-	if err != nil {
-		return nil, nil, err
-	}
-	copier := repository.NewLocalCopier(osfs.New(""), 0)
-
-	return tmpFs, copier, nil
 }

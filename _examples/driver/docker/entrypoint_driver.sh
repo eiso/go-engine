@@ -2,6 +2,10 @@
 
 case "$1" in
 
+  'driver')
+  	exec ./$@
+	;;
+
   *)
   	exec $@
 	;;
