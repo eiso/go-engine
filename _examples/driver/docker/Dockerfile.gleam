@@ -6,7 +6,7 @@ RUN apk --update add git openssh
 
 EXPOSE 45326
 
-VOLUME /data
+VOLUME /tmp
 
 COPY gleam /usr/bin/
 COPY driver /usr/bin/

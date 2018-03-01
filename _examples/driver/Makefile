@@ -41,4 +41,4 @@ docker: binaries
 	docker push eisokant/pga
 
 run_docker: docker
-	docker-compose up
+	docker-compose -f docker/docker-compose.yaml up
