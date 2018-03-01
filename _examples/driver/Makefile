@@ -40,5 +40,15 @@ docker: binaries
 	docker build -f docker/Dockerfile.pga -t eisokant/pga .
 	docker push eisokant/pga
 
+job:
+	go clean $(DRIVER_SOURCE_DIR)
+	rm -f $(BINARY_DRIVER)
+	go get $(GO_FLAGS) -d $(DRIVER_SOURCE_DIR)
+	dep ensure
+	cp -R $(GOPATH)/src/github.com/chrislusf/gleam/distributed/ ../../vendor/github.com/chrislusf/gleam/
+	CGO_ENABLED=0 go build -tags norwfs -a -ldflags '-extldflags "-static"' -o $(BINARY_DRIVER) $(DRIVER_SOURCE_DIR)
+	docker build -f docker/Dockerfile.driver -t eisokant/driver .
+	docker push eisokant/driver
+
 run_docker: docker
 	docker-compose -f docker/docker-compose.yaml up
