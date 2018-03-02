@@ -12,7 +12,7 @@ spec:
           claimName: gleam-pvc
       containers:
       - name: pga-container
-        image: eisokant/pga
+        image: eiso/pga
         args: ["download-dataset"]
         volumeMounts:
         - name: gleam-data

@@ -2,25 +2,25 @@ version: '2'
 
 services:
   master:
-    image: eisokant/gleam
+    image: eiso/gleam
     command: "master"
   agent_1:
-    image: eisokant/gleam
+    image: eiso/gleam
     command: 'agent --memory=1500 --master=master:45326'
     depends_on: 
      - master
   agent_2:
-    image: eisokant/gleam
+    image: eiso/gleam
     command: 'agent --memory=1500 --master=master:45326'
     depends_on: 
      - master
   agent_3:
-    image: eisokant/gleam
+    image: eiso/gleam
     command: 'agent --memory=1500 --master=master:45326'
     depends_on: 
      - master
   driver:
-    image: eisokant/driver
+    image: eiso/driver
     command: 'tail -f /dev/null'
     depends_on: 
      - master
