@@ -145,14 +145,5 @@ func resolveRef(repo *git.Repository, ref *plumbing.Reference) (plumbing.Hash, e
 		refCommitHash = targetRef.Hash()
 	}
 
-	// A tag can be a pointer to any object type, so you cannot suppose that the tag will have a commit
-	// This code is therefore not correct
-	// // handle tag references
-	// tag, err := repo.TagObject(refCommitHash)
-	// if err == nil {
-	// 	commit, _ := tag.Commit()
-	// 	refCommitHash = commit.Hash
-	// }
-
 	return refCommitHash, nil
 }
