@@ -14,7 +14,7 @@ spec:
       containers:
       - name: driver-container
         image: eisokant/driver
-        args: ["driver", "--onDocker", "--query=test", "--path=/data/siva/latest/"]
+        args: ["driver", "--onDocker", "--query=test", "--path=/data/siva/latest/00"]
         volumeMounts:
         - name: gleam-data
           mountPath: /data

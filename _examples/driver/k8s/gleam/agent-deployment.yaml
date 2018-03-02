@@ -6,13 +6,13 @@ metadata:
   name: agent
   namespace: gleam
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       service: agent
   strategy:
     rollingUpdate:
-      maxSurge: 1
+      maxSurge: 0
       maxUnavailable: 1
     type: RollingUpdate
   template:
@@ -25,11 +25,11 @@ spec:
         image: eisokant/gleam
         resources:
           limits:
-            memory: "2Gi"
-            cpu: "0.3"
+            memory: "1048Mi"
+            cpu: "0.6"
         args:
           - "agent"
-          - "--memory=2048 --master=master:45326"
+          - "--memory=1048 --master=master:45326"
         volumeMounts:
         - name: gleam-data
           mountPath: /data
