@@ -147,7 +147,7 @@ func resolveRef(repo *git.Repository, ref *plumbing.Reference) (plumbing.Hash, e
 
 	// avoids handling tags
 	_, err := repo.TagObject(refCommitHash)
-	if err != nil {
+	if err != plumbing.ErrObjectNotFound {
 		return plumbing.NewHash(""), ErrRef
 	}
 
