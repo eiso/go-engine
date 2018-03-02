@@ -33,11 +33,24 @@ make clean
 make docker
 ```
 
+### Defining your Google Cloud Node Pool
+
+go-engine is CPU intensive but low memory consumption, therefore it is ~ 20% more affordable to use Google Cloud's [high-CPU instances](https://cloud.google.com/compute/docs/machine-types#highcpu).
+
+```
+gcloud container node-pools create go-engine-node-pool --cluster=gleam --disk-size=50 --image-type=cos --machine-type=n1-highcpu-2 --num-nodes=5
+```
+In case you need to delete it:
+
+```
+#gcloud container node-pools delete go-engine-node-pool --cluster=gleam
+```
+
 ### Setting up your k8s cluster
 
 ```
 # gcloud container clusters delete gleam
-gcloud container clusters create gleam --num-nodes=4
+gcloud container clusters create gleam --num-nodes=5
 gcloud container clusters get-credentials gleam
 gcloud container clusters list
 ```

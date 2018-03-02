@@ -22,6 +22,7 @@ func main() {
 		isDistributed   = flag.Bool("distributed", false, "run in distributed or not")
 		isDockerCluster = flag.Bool("onDocker", false, "run in docker cluster")
 		pathPtr         = flag.String("path", ".", "")
+		partitions      = flag.Int("partitions", 1, "number of partitions")
 	)
 
 	gio.Init()
@@ -40,7 +41,7 @@ func main() {
 
 	start := time.Now()
 
-	p, opts, err := queryExample(path, *query)
+	p, opts, err := queryExample(path, *query, *partitions)
 	if err != nil {
 		fmt.Printf("could not load query: %s \n", err)
 		os.Exit(0)
@@ -63,13 +64,13 @@ var (
 	opts []flow.FlowOption
 )
 
-func queryExample(path, query string) (*flow.Dataset, []flow.FlowOption, error) {
+func queryExample(path, query string, partitions int) (*flow.Dataset, []flow.FlowOption, error) {
 	f := flow.New(fmt.Sprintf("Driver: %s", query))
 	var p *flow.Dataset
 
 	switch query {
 	case "test":
-		p = f.Read(engine.Repositories(path, 2).References().Commits())
+		p = f.Read(engine.Repositories(path, partitions).References().Commits().Trees())
 	default:
 		return nil, nil, errors.New("this query is not implemented")
 	}
