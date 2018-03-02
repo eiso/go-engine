@@ -145,5 +145,15 @@ func resolveRef(repo *git.Repository, ref *plumbing.Reference) (plumbing.Hash, e
 		refCommitHash = targetRef.Hash()
 	}
 
+	// avoids handling tags
+	_, err := repo.TagObject(refCommitHash)
+	if err != nil {
+		return plumbing.NewHash(""), ErrRef
+	}
+
+	if ref.Type() == plumbing.InvalidReference {
+		return plumbing.NewHash(""), ErrRef
+	}
+
 	return refCommitHash, nil
 }
