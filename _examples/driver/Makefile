@@ -46,7 +46,7 @@ driver:
 	go get $(GO_FLAGS) -d $(DRIVER_SOURCE_DIR)
 	dep ensure
 	cp -R $(GOPATH)/src/github.com/chrislusf/gleam/distributed/ ../../vendor/github.com/chrislusf/gleam/
-	CGO_ENABLED=0 go build -tags norwfs -a -ldflags '-extldflags "-static"' -o $(BINARY_DRIVER) $(DRIVER_SOURCE_DIR)
+	CGO_ENABLED=1 go build -race -tags norwfs -a -ldflags '-extldflags "-static"' -o $(BINARY_DRIVER) $(DRIVER_SOURCE_DIR)
 	docker build -f docker/Dockerfile.driver -t eisokant/driver .
 	docker push eisokant/driver
 

@@ -29,7 +29,11 @@ spec:
             cpu: "1.3"
         args:
           - "agent"
-          - "--memory=500 --master=master:45326"
+          - "--memory=500" 
+          - "--master=master:45326"
+          - "--executor.max=2"
+          - "--dataCenter=GCP"
+          - "--rack=go-engine-node-pool"
         volumeMounts:
         - name: gleam-data
           mountPath: /data

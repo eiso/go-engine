@@ -19,7 +19,7 @@ spec:
         - "--query=test"
         - "--path=/data/siva/latest/00"
         - "--onDocker"
-        - "--partitions=1"
+        - "--partitions=50"
         volumeMounts:
         - name: gleam-data
           mountPath: /data
