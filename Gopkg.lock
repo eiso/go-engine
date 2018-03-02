@@ -41,7 +41,7 @@
   version = "v1.13.4"
 
 [[projects]]
-  branch = "master"
+  branch = "improvements"
   name = "github.com/chrislusf/gleam"
   packages = [
     "filesystem",
@@ -53,7 +53,7 @@
     "util",
     "util/on_interrupt"
   ]
-  revision = "8beade25607766cb25924b4f5061ed8900daa198"
+  revision = "d6ebfd06671c85d720173d2cb5b04a0a602adec8"
 
 [[projects]]
   name = "github.com/colinmarc/hdfs"
@@ -357,6 +357,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "06cf74428bc7d9592f781842524a2787b0359f463ba8f8d28ed85ed6cab1110d"
+  inputs-digest = "464493bff0007a412e16b399428dcfe3043eb36fbd50753284797e57d7f35c25"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -1,5 +1,6 @@
 BINARY = gleam
-SOURCE_DIR = github.com/chrislusf/gleam/distributed/gleam
+USER = eiso
+SOURCE_DIR = github.com/$(USER)/gleam/distributed/gleam
 
 BINARY_DRIVER = driver
 DRIVER_SOURCE_DIR = github.com/eiso/go-engine/_examples/driver
@@ -9,6 +10,9 @@ BINARY_PGA = pga
 
 .PHONY : clean deps binaries docker run_docker
 
+override: 
+	git config --local url.https://github.com/eiso/gleam.insteadOf https://github.com/chrislusf/gleam
+	
 clean:
 	go clean $(SOURCE_DIR)
 	go clean $(DRIVER_SOURCE_DIR)
@@ -17,12 +21,13 @@ clean:
 	rm -f $(BINARY_DRIVER)-darwin
 	rm -f $(BINARY_PGA)
 
-deps:
+deps: override
 	go get $(GO_FLAGS) -d $(SOURCE_DIR)
 	go get $(GO_FLAGS) -d $(DRIVER_SOURCE_DIR)
 	go get $(GO_FLAGS) -d $(PGA_SOURCE_DIR)
 	dep ensure
-	cp -R $(GOPATH)/src/github.com/chrislusf/gleam/distributed/ ../../vendor/github.com/chrislusf/gleam/
+	git --git-dir=$(GOPATH)/src/github.com/$(USER)/gleam/.git checkout improvements 
+	cp -R $(GOPATH)/src/github.com/$(USER)/gleam/distributed/ ../../vendor/github.com/chrislusf/gleam/
 
 binaries: deps
 	CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o $(BINARY) $(SOURCE_DIR)
@@ -33,22 +38,22 @@ binaries-darwin: deps
 	GOOS=darwin CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o $(BINARY_DRIVER)-darwin $(DRIVER_SOURCE_DIR)
 
 docker: binaries
-	docker build -f docker/Dockerfile.driver -t eisokant/driver .
-	docker push eisokant/driver
-	docker build -f docker/Dockerfile.gleam -t eisokant/gleam .
-	docker push eisokant/gleam
-	docker build -f docker/Dockerfile.pga -t eisokant/pga .
-	docker push eisokant/pga
+	docker build -f docker/Dockerfile.driver -t eiso/driver .
+	docker push eiso/driver
+	docker build -f docker/Dockerfile.gleam -t eiso/gleam .
+	docker push eiso/gleam
+	docker build -f docker/Dockerfile.pga -t eiso/pga .
+	docker push eiso/pga
 
-driver:
-	go clean $(DRIVER_SOURCE_DIR)
-	rm -f $(BINARY_DRIVER)
-	go get $(GO_FLAGS) -d $(DRIVER_SOURCE_DIR)
-	dep ensure
-	cp -R $(GOPATH)/src/github.com/chrislusf/gleam/distributed/ ../../vendor/github.com/chrislusf/gleam/
-	CGO_ENABLED=1 go build -race -tags norwfs -a -ldflags '-extldflags "-static"' -o $(BINARY_DRIVER) $(DRIVER_SOURCE_DIR)
-	docker build -f docker/Dockerfile.driver -t eisokant/driver .
-	docker push eisokant/driver
+driver: deps
+	CGO_ENABLED=1 go build -a -ldflags '-extldflags "-static"' -o $(BINARY_DRIVER) $(DRIVER_SOURCE_DIR)
+	docker build -f docker/Dockerfile.driver -t eiso/driver .
+	docker push eiso/driver
+
+driver-experimental: deps
+	CGO_ENABLED=1 go build -race -a -ldflags '-extldflags "-static"' -o $(BINARY_DRIVER) $(DRIVER_SOURCE_DIR)
+	docker build -f docker/Dockerfile.driver-experimental -t eiso/driver-experimental .
+	docker push eiso/driver-experimental
 
 run_docker: docker
 	docker-compose -f docker/docker-compose.yaml up

@@ -54,5 +54,5 @@
   name = "github.com/satori/go.uuid"
 
 [[constraint]]
-  branch = "master"
+  branch = "improvements"
   name = "github.com/chrislusf/gleam"

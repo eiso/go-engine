@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: agent
-        image: eisokant/gleam
+        image: eiso/gleam
         resources:
           limits:
             memory: "500Mi"
