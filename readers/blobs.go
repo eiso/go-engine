@@ -52,6 +52,7 @@ func (r *Blobs) Read() (*util.Row, error) {
 
 	file, err := r.fileIter.Next()
 	if err == io.EOF {
+		r.fileIter.Close()
 		r.fileIter = nil
 		return r.Read()
 	} else if err != nil {
@@ -77,4 +78,14 @@ func (r *Blobs) Read() (*util.Row, error) {
 		binary,
 		file.Blob.Size,
 	), nil
+}
+
+func (r *Blobs) Close() error {
+	if r.fileIter != nil {
+		r.fileIter.Close()
+	}
+	if r.commitsIter != nil {
+		r.commitsIter.Close()
+	}
+	return nil
 }
