@@ -70,7 +70,8 @@ func queryExample(path, query string, partitions int) (*flow.Dataset, []flow.Flo
 
 	switch query {
 	case "test":
-		p = f.Read(engine.Repositories(path, partitions).References())
+		p = f.Read(engine.Repositories(path, partitions).
+			References())
 	default:
 		return nil, nil, errors.New("this query is not implemented")
 	}
