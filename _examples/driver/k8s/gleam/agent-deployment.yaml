@@ -25,13 +25,13 @@ spec:
         image: eiso/gleam
         resources:
           limits:
-            memory: "500Mi"
-            cpu: "1.3"
+            memory: "700Mi"
+            cpu: "3"
         args:
           - "agent"
-          - "--memory=500" 
+          - "--memory=700" 
           - "--master=master:45326"
-          - "--executor.max=2"
+          - "--executor.max=3"
           - "--dataCenter=GCP"
           - "--rack=go-engine-node-pool"
         volumeMounts:

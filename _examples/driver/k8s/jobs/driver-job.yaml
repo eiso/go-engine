@@ -17,9 +17,9 @@ spec:
         args: 
         - "driver"
         - "--query=test"
-        - "--path=/data/siva/latest/00"
+        - "--path=/data/siva/latest/"
         - "--onDocker"
-        - "--partitions=4"
+        - "--partitions=13"
         volumeMounts:
         - name: gleam-data
           mountPath: /data
