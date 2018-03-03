@@ -10,9 +10,6 @@ BINARY_PGA = pga
 
 .PHONY : clean deps binaries docker run_docker
 
-override: 
-	git config --local url.https://github.com/eiso/gleam.insteadOf https://github.com/chrislusf/gleam
-	
 clean:
 	go clean $(SOURCE_DIR)
 	go clean $(DRIVER_SOURCE_DIR)
@@ -21,7 +18,7 @@ clean:
 	rm -f $(BINARY_DRIVER)-darwin
 	rm -f $(BINARY_PGA)
 
-deps: override
+deps: 
 	go get $(GO_FLAGS) -d $(SOURCE_DIR)
 	go get $(GO_FLAGS) -d $(DRIVER_SOURCE_DIR)
 	go get $(GO_FLAGS) -d $(PGA_SOURCE_DIR)
