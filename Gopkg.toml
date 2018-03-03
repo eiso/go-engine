@@ -56,3 +56,4 @@
 [[constraint]]
   branch = "improvements"
   name = "github.com/chrislusf/gleam"
+  source = "github.com/eiso/gleam"
