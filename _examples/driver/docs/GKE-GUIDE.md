@@ -231,13 +231,13 @@ kubectl get pods
 kubectl exec -it agent-786073843-zxjxj -- /bin/sh
 ```
 
-### Detaching a disk
+#### Detaching a disk
 
 ```
 gcloud compute instances detach-disk gke-gleam-default-pool-d58b1f3f-zgw3 --disk gleam-pv-disk
 ```
 
-### Debugging empty downloads
+#### Debugging empty downloads
 
 Find all files of size 0
 
@@ -249,4 +249,19 @@ Find all files of size >0
 
 ```
 find /data/siva/latest/ea/ -type f -size +0c -exec ls {} \;
+```
+
+#### Expose 8080 to run pprof on the driver
+
+```
+kubectl expose deployment agent --type=LoadBalancer --name=pprof
+kubectl describe services pprof
+kubectl get services pprof
+```
+
+To see memory usage:
+
+```
+go tool pprof http://EXTERNAL-IP:8080/debug/pprof/heap
+top
 ```
