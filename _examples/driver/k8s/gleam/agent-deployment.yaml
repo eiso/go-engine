@@ -25,11 +25,11 @@ spec:
         image: eiso/gleam
         resources:
           limits:
-            memory: "1400Mi"
+            memory: "1900Mi"
             cpu: "3"
         args:
           - "agent"
-          - "--memory=1400" 
+          - "--memory=1900" 
           - "--master=master:45326"
           - "--executor.max=3"
           - "--dataCenter=GCP"

@@ -21,14 +21,11 @@ import (
 
 func main() {
 
-	go func() {
-		log.Println(http.ListenAndServe("0.0.0.0:8080", nil))
-	}()
-
 	var (
 		query           = flag.String("query", "", "name the query you want to run")
 		isDistributed   = flag.Bool("distributed", false, "run in distributed or not")
 		isDockerCluster = flag.Bool("onDocker", false, "run in docker cluster")
+		pprof           = flag.Bool("pprof", false, "opens up pprof on 0.0.0.0:8080")
 		pathPtr         = flag.String("path", ".", "")
 		partitions      = flag.Int("partitions", 1, "number of partitions")
 	)
@@ -45,6 +42,12 @@ func main() {
 		log.Print("analyzing the current directory, provide --path=/your/repos for a different path")
 	} else {
 		log.Printf("analyzing %s", path)
+	}
+
+	if *pprof {
+		go func() {
+			log.Println(http.ListenAndServe("0.0.0.0:8080", nil))
+		}()
 	}
 
 	start := time.Now()

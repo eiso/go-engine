@@ -2,7 +2,7 @@ FROM alpine:latest
 MAINTAINER Chris Lu <chris.lu@gmail.com>
 
 RUN mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
-RUN apk --update add git openssh
+RUN apk --update add git openssh htop
 
 EXPOSE 45326
 
