@@ -54,6 +54,7 @@
     "util/on_interrupt"
   ]
   revision = "d6ebfd06671c85d720173d2cb5b04a0a602adec8"
+  source = "github.com/eiso/gleam"
 
 [[projects]]
   name = "github.com/colinmarc/hdfs"
@@ -290,6 +291,7 @@
   version = "v4.1.0"
 
 [[projects]]
+  branch = "optimize-1"
   name = "gopkg.in/src-d/go-git.v4"
   packages = [
     ".",
@@ -333,8 +335,8 @@
     "utils/merkletrie/internal/frame",
     "utils/merkletrie/noder"
   ]
-  revision = "886dc83f3ed518a78772055497bcc7d7621b468e"
-  version = "v4.1.1"
+  revision = "fa6b1527df0dc36011e4594f67a58f331068ed25"
+  source = "github.com/dennwc/go-git"
 
 [[projects]]
   name = "gopkg.in/src-d/go-siva.v1"
@@ -357,6 +359,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "464493bff0007a412e16b399428dcfe3043eb36fbd50753284797e57d7f35c25"
+  inputs-digest = "8831044939406dd39324fdb297bed49b12d404de30476e211f569807993ac5a7"
   solver-name = "gps-cdcl"
   solver-version = 1
