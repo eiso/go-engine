@@ -14,9 +14,17 @@ import (
 
 	engine "github.com/eiso/go-engine"
 	"github.com/eiso/go-engine/utils"
+
+	"net/http"
+	_ "net/http/pprof"
 )
 
 func main() {
+
+	go func() {
+		log.Println(http.ListenAndServe("0.0.0.0:8080", nil))
+	}()
+
 	var (
 		query           = flag.String("query", "", "name the query you want to run")
 		isDistributed   = flag.Bool("distributed", false, "run in distributed or not")

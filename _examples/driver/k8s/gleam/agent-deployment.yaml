@@ -37,6 +37,9 @@ spec:
         volumeMounts:
         - name: gleam-data
           mountPath: /data
+        ports:
+        - containerPort: 8080
+          protocol: TCP  
       volumes:
         - name: gleam-data
           persistentVolumeClaim:
