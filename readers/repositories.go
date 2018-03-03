@@ -57,6 +57,10 @@ func (r *Repositories) Read() (*util.Row, error) {
 	return util.NewRow(util.Now(), r.repositoryID, headHash), nil
 }
 
+func (r *Repositories) Close() error {
+	return nil
+}
+
 type reposIter struct {
 	repos []*git.Repository
 	pos   int

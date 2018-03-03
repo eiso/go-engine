@@ -80,6 +80,16 @@ func (r *Commits) GetIter() object.CommitIter {
 	}
 }
 
+func (r *Commits) Close() error {
+	if r.commitsIter != nil {
+		r.commitsIter.Close()
+	}
+	if r.refsIter != nil {
+		r.refsIter.Close()
+	}
+	return nil
+}
+
 type commitsIterator struct {
 	repo     *git.Repository
 	refsIter storer.ReferenceIter

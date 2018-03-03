@@ -15,6 +15,7 @@ func Repositories(path string, partitionCount int) *sourceRepositories {
 type reader interface {
 	Read() (*util.Row, error)
 	ReadHeader() ([]string, error)
+	Close() error
 }
 
 func (ds *shardInfo) NewReader(r *git.Repository, path string, flag bool) (reader, error) {
@@ -37,35 +38,41 @@ func (ds *shardInfo) NewReader(r *git.Repository, path string, flag bool) (reade
 
 	refs, err := refsReader.GetIter()
 	if err != nil {
+		refsReader.Close()
 		return nil, err
 	}
 
 	commitsReader, err := readers.NewCommits(r, path, refs, ds.AllCommits)
 	if err != nil {
+		refs.Close()
+		refsReader.Close()
 		return nil, err
 	}
 
 	if ds.DataType == "commits" {
 		return commitsReader, nil
 	}
+	closer := func() {
+		commitsReader.Close()
+		refs.Close()
+		refsReader.Close()
+	}
 
 	if ds.DataType == "trees" {
 		treesReader, err := readers.NewTrees(r, path, commitsReader.GetIter())
 		if err != nil {
+			closer()
 			return nil, err
 		}
-
 		return treesReader, nil
-	}
-
-	if ds.DataType == "blobs" {
+	} else if ds.DataType == "blobs" {
 		blobsReader, err := readers.NewBlobs(r, path, commitsReader.GetIter())
 		if err != nil {
+			closer()
 			return nil, err
 		}
-
 		return blobsReader, nil
 	}
-
+	closer()
 	return nil, fmt.Errorf("unkown data type %q", ds.DataType)
 }

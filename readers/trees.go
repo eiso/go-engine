@@ -65,3 +65,13 @@ func (r *Trees) Read() (*util.Row, error) {
 		name,
 	), nil
 }
+
+func (r *Trees) Close() error {
+	if r.commitsIter != nil {
+		r.commitsIter.Close()
+	}
+	if r.treeIter != nil {
+		r.treeIter.Close()
+	}
+	return nil
+}

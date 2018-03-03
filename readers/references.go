@@ -84,6 +84,13 @@ func (r *References) GetIter() (storer.ReferenceIter, error) {
 	return refs, err
 }
 
+func (r *References) Close() error {
+	if r.refs != nil {
+		r.refs.Close()
+	}
+	return nil
+}
+
 type refIterator struct {
 	repo     *git.Repository
 	refNames []plumbing.ReferenceName
