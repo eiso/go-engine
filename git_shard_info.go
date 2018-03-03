@@ -84,6 +84,8 @@ func (s *shardInfo) ReadSplit() error {
 	if err != nil {
 		return errors.Wrapf(err, "could not read repository %s", s.RepoPath)
 	}
+	defer reader.Close()
+
 	if s.HasHeader {
 		if _, err := reader.ReadHeader(); err != nil {
 			return errors.Wrap(err, "could not read headers")
