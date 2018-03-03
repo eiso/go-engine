@@ -76,14 +76,12 @@ func (s *shardInfo) ReadSplit() error {
 	} else if s.RepoType == "siva" {
 		repo, err = readSiva(s.RepoPath)
 		if err != nil {
-			log.Printf("Could not open: %s - %s", s.RepoPath, err)
 			return errors.Wrap(err, "could not open siva repository")
 		}
 	}
 
 	reader, err := s.NewReader(repo, s.RepoPath, false)
 	if err != nil {
-		log.Println("err", err)
 		return errors.Wrapf(err, "could not read repository %s", s.RepoPath)
 	}
 	if s.HasHeader {
