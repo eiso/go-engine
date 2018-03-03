@@ -35,15 +35,21 @@ make docker
 
 ### Defining your Google Cloud Node Pool
 
-go-engine is CPU intensive but low memory consumption, therefore it is ~ 20% more affordable to use Google Cloud's [high-CPU instances](https://cloud.google.com/compute/docs/machine-types#highcpu).
+go-engine is CPU intensive but low memory consumption, therefore it is ~20% more affordable to use Google Cloud's [high-CPU instances](https://cloud.google.com/compute/docs/machine-types#highcpu).
 
 ```
-gcloud container node-pools create go-engine-node-pool --cluster=gleam --disk-size=50 --image-type=cos --machine-type=n1-highcpu-2 --num-nodes=5
+gcloud container node-pools create go-engine-node-pool --cluster=gleam --disk-size=50 --image-type=cos --machine-type=n1-highcpu-4 --num-nodes=5
 ```
-In case you need to delete it:
+
+If you want to resize an already running cluster but don't mind deleting your running deployment:
 
 ```
-#gcloud container node-pools delete go-engine-node-pool --cluster=gleam
+kubectl delete deployment master
+kubectl delete deployment agent
+# be sure to delete any remaining jobs
+# kubectl delete job NAME
+gcloud container node-pools delete go-engine-node-pool --cluster=gleam
+# RUN ABOVE 'gcloud container node-pools create...' COMMAND
 ```
 
 ### Setting up your k8s cluster
@@ -225,4 +231,22 @@ kubectl get pods
 kubectl exec -it agent-786073843-zxjxj -- /bin/sh
 ```
 
+### Detaching a disk
+
+```
 gcloud compute instances detach-disk gke-gleam-default-pool-d58b1f3f-zgw3 --disk gleam-pv-disk
+```
+
+### Debugging empty downloads
+
+Find all files of size 0
+
+```
+find /data/siva/latest/ -type f -size 0c -exec ls {} \;
+```
+
+Find all files of size >0
+
+```
+find /data/siva/latest/ea/ -type f -size +0c -exec ls {} \;
+```

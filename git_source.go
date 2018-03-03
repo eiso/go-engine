@@ -115,7 +115,8 @@ func (s *baseSource) gitRepos(path string, out io.Writer, stats *pb.InstructionS
 
 func (s *baseSource) isStandardRepository(path string) bool {
 	p := filepath.Join(path, ".git")
-	_, err := filesystem.Open(p)
+	ps, err := filesystem.Open(p)
+	defer ps.Close()
 	if err != nil {
 		return false
 	}
@@ -125,6 +126,14 @@ func (s *baseSource) isStandardRepository(path string) bool {
 func (s *baseSource) isSivaFile(path string) bool {
 	ext := filepath.Ext(path)
 	if ext != ".siva" {
+		return false
+	}
+	ps, err := filesystem.Open(path)
+	defer ps.Close()
+	if err != nil {
+		return false
+	}
+	if ps.Size() == 0 {
 		return false
 	}
 	return true

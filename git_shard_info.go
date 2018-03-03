@@ -55,7 +55,12 @@ func newReadShard(row []interface{}) error {
 	if err := s.decode(gio.ToBytes(row[0])); err != nil {
 		return err
 	}
-	return s.ReadSplit()
+
+	err := s.ReadSplit()
+	if err != nil {
+		log.Printf("newReadShard error: %s", err)
+	}
+	return err
 }
 
 func (s *shardInfo) ReadSplit() error {
