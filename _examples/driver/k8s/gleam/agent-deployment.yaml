@@ -24,12 +24,12 @@ spec:
       - name: agent
         image: eiso/gleam
         resources:
-          limits:
+          requests:
             memory: "1900Mi"
             cpu: "3"
         args:
           - "agent"
-          - "--memory=1900" 
+          - "--memory=1200" 
           - "--master=master:45326"
           - "--executor.max=3"
           - "--dataCenter=GCP"
