@@ -11,6 +11,7 @@ import (
 	"github.com/chrislusf/gleam/distributed"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/gio"
+	enry "gopkg.in/src-d/enry.v1"
 
 	engine "github.com/eiso/go-engine"
 	"github.com/eiso/go-engine/utils"
@@ -64,6 +65,30 @@ var (
 	opts []flow.FlowOption
 )
 
+var getLanguagesFromBlobs = gio.RegisterMapper(utils.NamedMapper(
+	[]string{"lang"},
+	func(row []interface{}, getByName utils.GetByNameFunc) error {
+		isBinary := getByName(row, "isBinary").(bool)
+		if isBinary {
+			return nil
+		}
+
+		path := getByName(row, "path").(string)
+		content := gio.ToBytes(getByName(row, "content"))
+		lang := enry.GetLanguage(path, content)
+		if lang == "" {
+			return nil
+		}
+
+		return gio.Emit(lang)
+	}))
+
+var countGroups = gio.RegisterMapper(func(x []interface{}) error {
+	key := x[0]
+	count := len(x) - 1
+	return gio.Emit(key, count)
+})
+
 func queryExample(path, query string, partitions int) (*flow.Dataset, []flow.FlowOption, error) {
 	f := flow.New(fmt.Sprintf("Driver: %s", query))
 	var p *flow.Dataset
@@ -71,6 +96,20 @@ func queryExample(path, query string, partitions int) (*flow.Dataset, []flow.Flo
 	switch query {
 	case "test":
 		p = f.Read(engine.Repositories(path, partitions).References())
+	case "most-used-languages":
+		numberOfLangs := 10
+		fmt.Printf(">>> %d most used languages:\n", numberOfLangs)
+
+		p = f.Read(engine.Repositories(path, partitions).
+			References().
+			Commits().
+			Trees().
+			Blobs().
+			WithHeaders()).
+			Map("classify languages", getLanguagesFromBlobs).
+			GroupBy("group by lang", flow.Field(1)).
+			Map("group count", countGroups).
+			Top("top", numberOfLangs, flow.OrderBy(2, false))
 	default:
 		return nil, nil, errors.New("this query is not implemented")
 	}
