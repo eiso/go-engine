@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/chrislusf/gleam/gio"
+	"github.com/chrislusf/gleam/util"
 	"github.com/eiso/go-engine/readers"
 	"github.com/pkg/errors"
 
@@ -82,8 +83,18 @@ func (s *shardInfo) ReadSplit() error {
 		return errors.Wrapf(err, "could not read repository %s", s.RepoPath)
 	}
 	if s.HasHeader {
-		if _, err := reader.ReadHeader(); err != nil {
+		headers, err := reader.ReadHeader()
+		if err != nil {
 			return errors.Wrap(err, "could not read headers")
+		}
+
+		interfaces := make([]interface{}, len(headers))
+		for i, h := range headers {
+			interfaces[i] = h
+		}
+		row := util.NewRow(util.Now(), interfaces...)
+		if err := row.WriteTo(os.Stdout); err != nil {
+			return errors.Wrap(err, "could not write row to stdout")
 		}
 	}
 
