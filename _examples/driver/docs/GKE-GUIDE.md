@@ -41,7 +41,7 @@ go-engine is CPU intensive but low memory consumption, therefore it is ~20% more
 gcloud container node-pools create go-engine-node-pool --cluster=gleam --disk-size=50 --image-type=cos --machine-type=n1-highcpu-4 --num-nodes=5
 ```
 
-If you want to resize an already running cluster but don't mind deleting your running deployment:
+If you want to change an already running cluster but don't mind deleting your running deployment:
 
 ```
 kubectl delete deployment master
@@ -82,6 +82,14 @@ kubectl config view | grep namespace:
 ```
 
 In case you see an error: `namespaces "gleam" not found`. Run the above command again, sometimes GCP takes a bit of time to propogate the namespaces.
+
+#### Resizing your cluster
+
+In case you need to resize you cluster:
+
+```
+gcloud container clusters resize gleam --node-pool go-engine-node-pool --size 6
+```
 
 ### Load the Public Git Archive dataset with pga
 
@@ -250,6 +258,8 @@ Find all files of size >0
 ```
 find /data/siva/latest/ea/ -type f -size +0c -exec ls {} \;
 ```
+
+#### See logs of previous pod after a restart
 
 #### Expose 8080 to run pprof on the driver
 

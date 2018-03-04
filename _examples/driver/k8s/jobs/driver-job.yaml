@@ -14,6 +14,10 @@ spec:
       containers:
       - name: driver-container
         image: eiso/driver
+        resources:
+          requests:
+            memory: "2000Mi"
+            cpu: "3"
         args: 
         - "driver"
         - "--query=test"

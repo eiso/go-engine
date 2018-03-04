@@ -30,6 +30,12 @@ func main() {
 		partitions      = flag.Int("partitions", 1, "number of partitions")
 	)
 
+	if *pprof {
+		go func() {
+			log.Println(http.ListenAndServe("0.0.0.0:8080", nil))
+		}()
+	}
+
 	gio.Init()
 
 	if *query == "" {
@@ -42,12 +48,6 @@ func main() {
 		log.Print("analyzing the current directory, provide --path=/your/repos for a different path")
 	} else {
 		log.Printf("analyzing %s", path)
-	}
-
-	if *pprof {
-		go func() {
-			log.Println(http.ListenAndServe("0.0.0.0:8080", nil))
-		}()
 	}
 
 	start := time.Now()
@@ -76,7 +76,7 @@ var (
 )
 
 func queryExample(path, query string, partitions int) (*flow.Dataset, []flow.FlowOption, error) {
-	f := flow.New(fmt.Sprintf("Driver: %s", query))
+	f := flow.New(fmt.Sprintf("Driver: %s", path))
 	var p *flow.Dataset
 
 	switch query {
