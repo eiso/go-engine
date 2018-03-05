@@ -67,27 +67,35 @@ func newGitRepositories(fsPath string, partitionCount int) *sourceRepositories {
 
 // Find all standard & siva repositories in the directory
 func (s *baseSource) gitRepos(path string, out io.Writer, stats *pb.InstructionStat) error {
-	virtualFiles, err := filesystem.List(path)
-	if err != nil {
-		return fmt.Errorf("Failed to list files in %s: %v", path, err)
+
+	var virtualFiles []*filesystem.FileLocation
+	var err error
+
+	if !filesystem.IsDir(path) && s.isSivaFile(path) {
+		virtualFiles = append(virtualFiles, &filesystem.FileLocation{path})
+	} else {
+		virtualFiles, err = filesystem.List(path)
+		if err != nil {
+			return fmt.Errorf("Failed to list files in %s: %v", path, err)
+		}
 	}
 
 	for _, vf := range virtualFiles {
-		if !filesystem.IsDir(vf.Location) && !s.isSivaFile(vf.Location) {
+		repoType := "standard"
+		if s.isSivaFile(vf.Location) {
+			repoType = "siva"
+		}
+
+		if !filesystem.IsDir(vf.Location) && repoType != "siva" {
 			continue
 		}
 
-		if !s.isStandardRepository(vf.Location) && !s.isSivaFile(vf.Location) {
-			err = s.gitRepos(vf.Location, out, stats)
+		if !s.isStandardRepository(vf.Location) && repoType != "siva" {
+			err := s.gitRepos(vf.Location, out, stats)
 			if err != nil {
 				return err
 			}
 			continue
-		}
-
-		repoType := "standard"
-		if s.isSivaFile(vf.Location) {
-			repoType = "siva"
 		}
 
 		stats.OutputCounter++
