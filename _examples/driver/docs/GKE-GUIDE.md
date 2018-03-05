@@ -261,6 +261,10 @@ find /data/siva/latest/ea/ -type f -size +0c -exec ls {} \;
 
 #### See logs of previous pod after a restart
 
+```
+kubectl logs -p  
+```
+
 #### Expose 8080 to run pprof on the driver
 
 ```
