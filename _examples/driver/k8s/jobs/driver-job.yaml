@@ -20,7 +20,7 @@ spec:
             cpu: "3"
         args: 
         - "driver"
-        - "--query=test"
+        - "--query=references"
         - "--path=/data/siva/latest/"
         - "--onDocker"
         - "--partitions=13"

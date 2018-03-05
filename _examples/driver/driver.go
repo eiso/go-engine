@@ -77,9 +77,26 @@ func queryExample(path, query string, partitions int) (*flow.Dataset, []flow.Flo
 	var p *flow.Dataset
 
 	switch query {
-	case "test":
+	case "repositories":
+		p = f.Read(engine.Repositories(path, partitions))
+	case "references":
 		p = f.Read(engine.Repositories(path, partitions).
 			References())
+	case "commits":
+		p = f.Read(engine.Repositories(path, partitions).
+			References().
+			Commits())
+	case "trees":
+		p = f.Read(engine.Repositories(path, partitions).
+			References().
+			Commits().
+			Trees())
+	case "blobs":
+		p = f.Read(engine.Repositories(path, partitions).
+			References().
+			Commits().
+			Trees().
+			Blobs())
 	default:
 		return nil, nil, errors.New("this query is not implemented")
 	}
