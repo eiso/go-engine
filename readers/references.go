@@ -163,15 +163,17 @@ func resolveRef(repo *git.Repository, ref *plumbing.Reference) (plumbing.Hash, e
 	}
 
 	if refName.IsTag() {
-		tag, err := repo.TagObject(refCommitHash)
-		if err != nil {
-			return plumbing.NewHash(""), ErrRef
-		}
-		commit, err := tag.Commit()
-		if err != nil {
-			return plumbing.NewHash(""), ErrRef
-		}
-		refCommitHash = commit.Hash
+		return plumbing.NewHash(""), ErrRef
+		// TODO commented out because of memory leak
+		// tag, err := repo.TagObject(refCommitHash)
+		// if err != nil {
+		// 	return plumbing.NewHash(""), ErrRef
+		// }
+		// commit, err := tag.Commit()
+		// if err != nil {
+		// 	return plumbing.NewHash(""), ErrRef
+		// }
+		// refCommitHash = commit.Hash
 	}
 
 	return refCommitHash, nil
