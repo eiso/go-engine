@@ -64,7 +64,7 @@ func newReadShard(row []interface{}) error {
 }
 
 func (s *shardInfo) ReadSplit() error {
-	log.Printf("reading %s from repo: %s", s.DataType, s.RepoPath)
+	log.Printf("started reading %s from: %s", s.DataType, s.RepoPath)
 
 	var repo *git.Repository
 	var err error
@@ -94,14 +94,15 @@ func (s *shardInfo) ReadSplit() error {
 
 	for {
 		row, err := reader.Read()
+		defer reader.Close()
 		if err == io.EOF {
+			log.Printf("finished reading %s from: %s", s.DataType, s.RepoPath)
 			return nil
 		} else if err == readers.ErrRef {
 			continue
 		} else if err != nil {
 			return errors.Wrap(err, "could not get next file")
 		}
-
 		// Writing to stdout is how agents communicate.
 		if err := row.WriteTo(os.Stdout); err != nil {
 			return errors.Wrap(err, "could not write row to stdout")
@@ -130,6 +131,5 @@ func readSiva(origPath string) (*git.Repository, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to open the git repository")
 	}
-
 	return repository, nil
 }

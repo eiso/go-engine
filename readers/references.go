@@ -51,6 +51,7 @@ func (r *References) Read() (*util.Row, error) {
 		return nil, err
 	}
 
+	// If a reference can't be resolved, it is skipped
 	refCommitHash, err := resolveRef(r.repo, ref)
 	if err != nil {
 		return nil, err
@@ -141,7 +142,16 @@ func (iter *refIterator) Close() {}
 // Get correct commit hash
 // there is Repository.ResolveRevision but it fails on some tags and performance is worst
 func resolveRef(repo *git.Repository, ref *plumbing.Reference) (plumbing.Hash, error) {
+	if ref.Type() == plumbing.InvalidReference {
+		return plumbing.NewHash(""), ErrRef
+	}
+
 	refCommitHash := ref.Hash()
+	refName := ref.Name()
+
+	if refCommitHash.IsZero() {
+		return plumbing.NewHash(""), ErrRef
+	}
 
 	// handle symbolic references like HEAD
 	if ref.Type() == plumbing.SymbolicReference {
@@ -152,14 +162,16 @@ func resolveRef(repo *git.Repository, ref *plumbing.Reference) (plumbing.Hash, e
 		refCommitHash = targetRef.Hash()
 	}
 
-	// avoids handling tags
-	_, err := repo.TagObject(refCommitHash)
-	if err != plumbing.ErrObjectNotFound {
-		return plumbing.NewHash(""), ErrRef
-	}
-
-	if ref.Type() == plumbing.InvalidReference {
-		return plumbing.NewHash(""), ErrRef
+	if refName.IsTag() {
+		tag, err := repo.TagObject(refCommitHash)
+		if err != nil {
+			return plumbing.NewHash(""), ErrRef
+		}
+		commit, err := tag.Commit()
+		if err != nil {
+			return plumbing.NewHash(""), ErrRef
+		}
+		refCommitHash = commit.Hash
 	}
 
 	return refCommitHash, nil

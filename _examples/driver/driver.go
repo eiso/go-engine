@@ -25,16 +25,13 @@ func main() {
 		query           = flag.String("query", "", "name the query you want to run")
 		isDistributed   = flag.Bool("distributed", false, "run in distributed or not")
 		isDockerCluster = flag.Bool("onDocker", false, "run in docker cluster")
-		pprof           = flag.Bool("pprof", false, "opens up pprof on 0.0.0.0:8080")
 		pathPtr         = flag.String("path", ".", "")
 		partitions      = flag.Int("partitions", 1, "number of partitions")
 	)
 
-	if *pprof {
-		go func() {
-			log.Println(http.ListenAndServe("0.0.0.0:8080", nil))
-		}()
-	}
+	go func() {
+		log.Println(http.ListenAndServe("0.0.0.0:8080", nil))
+	}()
 
 	gio.Init()
 
@@ -76,7 +73,7 @@ var (
 )
 
 func queryExample(path, query string, partitions int) (*flow.Dataset, []flow.FlowOption, error) {
-	f := flow.New(fmt.Sprintf("Driver: %s", path))
+	f := flow.New(fmt.Sprintf("Driver: %s on %s", query, path))
 	var p *flow.Dataset
 
 	switch query {
