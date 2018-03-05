@@ -94,9 +94,8 @@ func (s *shardInfo) ReadSplit() error {
 
 	for {
 		row, err := reader.Read()
-		defer reader.Close()
 		if err == io.EOF {
-			log.Printf("finished reading %s from: %s", s.DataType, s.RepoPath)
+			log.Printf("finished reading %s: %s", s.DataType, s.RepoPath)
 			return nil
 		} else if err == readers.ErrRef {
 			continue
@@ -108,7 +107,6 @@ func (s *shardInfo) ReadSplit() error {
 			return errors.Wrap(err, "could not write row to stdout")
 		}
 	}
-	return nil
 }
 
 func readSiva(origPath string) (*git.Repository, error) {
