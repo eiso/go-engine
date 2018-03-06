@@ -41,7 +41,7 @@
   version = "v1.13.4"
 
 [[projects]]
-  branch = "improvements"
+  branch = "master"
   name = "github.com/chrislusf/gleam"
   packages = [
     "filesystem",
@@ -53,7 +53,7 @@
     "util",
     "util/on_interrupt"
   ]
-  revision = "d6ebfd06671c85d720173d2cb5b04a0a602adec8"
+  revision = "8beade25607766cb25924b4f5061ed8900daa198"
   source = "github.com/eiso/gleam"
 
 [[projects]]
@@ -359,6 +359,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8831044939406dd39324fdb297bed49b12d404de30476e211f569807993ac5a7"
+  inputs-digest = "d35f8a8baf4ef6c9764c6b51e9ea6eabfe14ae2f93ffa2f63ba071263999b05f"
   solver-name = "gps-cdcl"
   solver-version = 1

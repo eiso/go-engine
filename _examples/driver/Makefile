@@ -54,3 +54,8 @@ driver-experimental: deps
 
 run_docker: docker
 	docker-compose -f docker/docker-compose.yaml up
+
+temp:
+	dep ensure
+	cp -R $(GOPATH)/src/github.com/chrislusf/gleam/distributed ../../vendor/github.com/chrislusf/gleam/
+	go install -tags norwfs
