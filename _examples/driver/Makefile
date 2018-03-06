@@ -35,21 +35,21 @@ binaries-darwin: deps
 	GOOS=darwin CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o $(BINARY_DRIVER)-darwin $(DRIVER_SOURCE_DIR)
 
 docker: binaries
-	docker build -f docker/Dockerfile.driver -t eiso/driver .
+	docker build --no-cache -f docker/Dockerfile.driver -t eiso/driver .
 	docker push eiso/driver
-	docker build -f docker/Dockerfile.gleam -t eiso/gleam .
+	docker build --no-cache -f docker/Dockerfile.gleam -t eiso/gleam .
 	docker push eiso/gleam
-	docker build -f docker/Dockerfile.pga -t eiso/pga .
+	docker build --no-cache -f docker/Dockerfile.pga -t eiso/pga .
 	docker push eiso/pga
 
 driver: deps
 	CGO_ENABLED=1 go build -a -ldflags '-extldflags "-static"' -o $(BINARY_DRIVER) $(DRIVER_SOURCE_DIR)
-	docker build -f docker/Dockerfile.driver -t eiso/driver .
+	docker build --no-cache -f docker/Dockerfile.driver -t eiso/driver .
 	docker push eiso/driver
 
 driver-experimental: deps
 	CGO_ENABLED=1 go build -race -a -ldflags '-extldflags "-static"' -o $(BINARY_DRIVER) $(DRIVER_SOURCE_DIR)
-	docker build -f docker/Dockerfile.driver-experimental -t eiso/driver-experimental .
+	docker build  --no-cache -f docker/Dockerfile.driver-experimental -t eiso/driver-experimental .
 	docker push eiso/driver-experimental
 
 run_docker: docker

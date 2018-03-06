@@ -19,7 +19,8 @@ spec:
     spec:
       containers:
       - name: master
-        image: eiso/gleam
+        image: eiso/gleam:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 45326
           protocol: TCP
