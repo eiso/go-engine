@@ -11,6 +11,7 @@ VOLUME /tmp
 ENV PATH="${PATH}:."
 
 COPY gleam /usr/bin/
+
 COPY docker/entrypoint_gleam.sh /entrypoint_gleam.sh
 
 RUN chmod +x /entrypoint_gleam.sh

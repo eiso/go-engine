@@ -22,7 +22,8 @@ spec:
     spec:
       containers:
       - name: agent
-        image: eiso/gleam
+        image: eiso/gleam:latest
+        imagePullPolicy: Always
         resources:
           requests:
             memory: "1900Mi"
@@ -31,7 +32,7 @@ spec:
           - "agent"
           - "--memory=1200" 
           - "--master=master:45326"
-          - "--executor.max=3"
+          - "--executor.max=6"
           - "--dataCenter=GCP"
           - "--rack=go-engine-node-pool"
         volumeMounts:
