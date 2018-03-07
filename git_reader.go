@@ -19,60 +19,61 @@ type reader interface {
 }
 
 func (ds *shardInfo) NewReader(r *git.Repository, path string, flag bool) (reader, error) {
+	// .Repositories()
 	if ds.DataType == "repositories" {
 		repoReader, err := readers.NewRepositories(r, path)
 		if err != nil {
+			repoReader.Close()
 			return nil, err
 		}
+		repoReader.Close()
 		return repoReader, nil
 	}
 
+	// .References()
 	refsReader, err := readers.NewReferences(r, path, ds.FilterRefs)
 	if err != nil {
+		refsReader.Close()
 		return nil, err
 	}
 
 	if ds.DataType == "references" {
+		refsReader.Close()
 		return refsReader, nil
 	}
 
-	refs, err := refsReader.GetIter()
+	// .Commits()
+	refsIter, err := refsReader.GetIter()
 	if err != nil {
-		refsReader.Close()
+		refsIter.Close()
 		return nil, err
 	}
 
-	commitsReader, err := readers.NewCommits(r, path, refs, ds.AllCommits)
+	commitsReader, err := readers.NewCommits(r, path, refsIter, ds.AllCommits)
 	if err != nil {
-		refs.Close()
 		refsReader.Close()
+		refsIter.Close()
+		commitsReader.Close()
 		return nil, err
 	}
 
 	if ds.DataType == "commits" {
 		return commitsReader, nil
 	}
-	closer := func() {
-		commitsReader.Close()
-		refs.Close()
-		refsReader.Close()
-	}
 
 	if ds.DataType == "trees" {
 		treesReader, err := readers.NewTrees(r, path, commitsReader.GetIter())
 		if err != nil {
-			closer()
 			return nil, err
 		}
 		return treesReader, nil
 	} else if ds.DataType == "blobs" {
 		blobsReader, err := readers.NewBlobs(r, path, commitsReader.GetIter())
 		if err != nil {
-			closer()
 			return nil, err
 		}
 		return blobsReader, nil
 	}
-	closer()
+
 	return nil, fmt.Errorf("unkown data type %q", ds.DataType)
 }
