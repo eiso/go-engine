@@ -31,6 +31,11 @@ binaries: deps
 	CGO_ENABLED=0 go build -tags norwfs -a -ldflags '-extldflags "-static"' -o $(BINARY_DRIVER) $(DRIVER_SOURCE_DIR)
 	CGO_ENABLED=1 go build -a -ldflags '-extldflags "-static"' -o $(BINARY_PGA) $(PGA_SOURCE_DIR)
 
+install: binaries
+	cp $(BINARY) $(GOPATH)/bin/
+	cp $(BINARY_DRIVER) $(GOPATH)/bin/
+	cp $(BINARY_PGA) $(GOPATH)/bin/
+
 binaries-darwin: deps
 	GOOS=darwin CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o $(BINARY_DRIVER)-darwin $(DRIVER_SOURCE_DIR)
 
@@ -54,8 +59,3 @@ driver-experimental: deps
 
 run_docker: docker
 	docker-compose -f docker/docker-compose.yaml up
-
-temp:
-	dep ensure
-	cp -R $(GOPATH)/src/github.com/chrislusf/gleam/distributed ../../vendor/github.com/chrislusf/gleam/
-	go install -tags norwfs
