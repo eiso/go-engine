@@ -100,20 +100,16 @@ func CopyMultipleReaders(readers []io.Reader, writer io.Writer) (inCounter int64
 	return inCounter, outCounter, nil
 }
 
-func ReaderToChannel(wg *sync.WaitGroup, name string, readCloser io.ReadCloser, writer io.WriteCloser, closeOutput bool, errorOutput io.Writer) error {
+func ReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, writer io.WriteCloser, closeOutput bool, errorOutput io.Writer) error {
 	defer wg.Done()
-	defer readCloser.Close()
+	defer reader.Close()
 	if closeOutput {
 		defer writer.Close()
 	}
 
-	var reader io.Reader = readCloser
-
-	if _, isBufioReader := reader.(*bufio.Reader); !isBufioReader {
-		reader = bufio.NewReaderSize(reader, BUFFER_SIZE)
-	}
+	buf := make([]byte, BUFFER_SIZE)
 	var counter int64
-	err := copyBuffer(writer, reader, &counter)
+	err := copyBuffer(writer, reader, buf, &counter)
 	if err != nil {
 		fmt.Fprintf(errorOutput, "%s>Read %d bytes from input to channel: %v\n", name, counter, err)
 		return err
@@ -126,12 +122,9 @@ func ChannelToWriter(wg *sync.WaitGroup, name string, reader io.Reader, writer i
 	defer wg.Done()
 	defer writer.Close()
 
-	if _, isBufioReader := reader.(*bufio.Reader); !isBufioReader {
-		reader = bufio.NewReaderSize(reader, BUFFER_SIZE)
-	}
-
+	buf := make([]byte, BUFFER_SIZE)
 	var counter int64
-	err := copyBuffer(writer, reader, &counter)
+	err := copyBuffer(writer, reader, buf, &counter)
 	if err != nil {
 		fmt.Fprintf(errorOutput, "%s>Moved %d bytes: %v\n", name, counter, err)
 	}
@@ -203,11 +196,7 @@ func ChannelToLineWriter(wg *sync.WaitGroup, stat *pb.InstructionStat, name stri
 
 }
 
-func copyBuffer(dst io.Writer, src io.Reader, written *int64) (err error) {
-
-	// this is a third buffer, additional to dst buffer and src buffer
-	buf := make([]byte, BUFFER_SIZE)
-
+func copyBuffer(dst io.Writer, src io.Reader, buf []byte, written *int64) (err error) {
 	for {
 		nr, er := src.Read(buf)
 		if nr > 0 {
