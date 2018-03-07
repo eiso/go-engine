@@ -1,0 +1,19 @@
+sudo: required
+os:
+  - linux
+  - osx
+
+language: go
+go:
+ - tip
+
+install:
+ - go get ./...
+ # - go get $(go list ./... | grep -v word_count_in_go)
+
+script:
+ # - go test -race ./...
+ - ./go.test.sh
+
+after_success:
+ - bash <(curl -s https://codecov.io/bash)

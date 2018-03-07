@@ -97,7 +97,7 @@ func (s *shardInfo) ReadSplit() error {
 		if err == io.EOF {
 			log.Printf("finished reading %s: %s", s.DataType, s.RepoPath)
 			return nil
-		} else if err == readers.ErrRef {
+		} else if err == readers.ErrRef || err == readers.ErrObj {
 			continue
 		} else if err != nil {
 			return errors.Wrap(err, "could not get next file")
