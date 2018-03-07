@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"runtime"
 	"runtime/pprof"
 	"strconv"
 	"strings"
@@ -19,32 +18,14 @@ func (runner *gleamRunner) runMapperReducer() {
 	defer cancel()
 
 	if runner.Option.IsProfiling {
-		cpuProfFile := fmt.Sprintf("mr_cpu_%d-s%d-t%d.pprof", runner.Option.HashCode,
+		profFile := fmt.Sprintf("mr%d-s%d-t%d.pprof", runner.Option.HashCode,
 			runner.Option.StepId, runner.Option.TaskId)
 		pwd, _ := os.Getwd()
-		println("saving pprof to", pwd+"/"+cpuProfFile)
+		println("saving pprof to", pwd+"/"+profFile)
 
-		cf, err := os.Create(cpuProfFile)
-		if err != nil {
-			log.Fatalf("failed to create cpu profile file %s: %v", pwd+"/"+cpuProfFile, err)
-		}
-		pprof.StartCPUProfile(cf)
+		f, _ := os.Create(profFile)
+		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
-
-		memProfFile := fmt.Sprintf("mr_mem_%d-s%d-t%d.pprof", runner.Option.HashCode,
-			runner.Option.StepId, runner.Option.TaskId)
-
-		mf, err := os.Create(memProfFile)
-		println("saving pprof to", pwd+"/"+memProfFile)
-		if err != nil {
-			log.Fatalf("failed to create memory profile file %s: %v", pwd+"/"+memProfFile, err)
-		}
-
-		defer func() {
-			runtime.GC()
-			pprof.Lookup("heap").WriteTo(mf, 0)
-
-		}()
 	}
 
 	stat.FlowHashCode = uint32(runner.Option.HashCode)

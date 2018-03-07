@@ -2,7 +2,6 @@ package flow
 
 import (
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/chrislusf/gleam/gio"
@@ -19,7 +18,6 @@ func (d *Dataset) Map(name string, mapperId gio.MapperId) *Dataset {
 	step.IsGoCode = true
 
 	ex, _ := os.Executable()
-	ex = filepath.Base(ex)
 
 	var args []string
 	args = append(args, ex)
