@@ -146,9 +146,9 @@ func (s *baseSource) isSivaFile(path string) bool {
 	}
 
 	// open the siva file to see if it is a valid git repository
-	if _, err := readSiva(path); err != nil {
-		return false
-	}
+	// if _, err := readSiva(path); err != nil {
+	// 	return false
+	// }
 
 	return true
 }
