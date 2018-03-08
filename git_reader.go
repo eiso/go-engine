@@ -38,7 +38,6 @@ func (ds *shardInfo) NewReader(r *git.Repository, path string, flag bool) (reade
 	}
 
 	if ds.DataType == "references" {
-		refsReader.Close()
 		return refsReader, nil
 	}
 

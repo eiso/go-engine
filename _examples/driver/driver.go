@@ -82,9 +82,16 @@ func queryExample(path, query string, partitions int) (*flow.Dataset, []flow.Flo
 	case "references":
 		p = f.Read(engine.Repositories(path, partitions).
 			References())
+	case "referencesMaster":
+		p = f.Read(engine.Repositories(path, partitions).
+			References().Filter("refs/heads/master"))
 	case "commits":
 		p = f.Read(engine.Repositories(path, partitions).
 			References().
+			Commits())
+	case "commitsMaster":
+		p = f.Read(engine.Repositories(path, partitions).
+			References().Filter("refs/heads/master").
 			Commits())
 	case "trees":
 		p = f.Read(engine.Repositories(path, partitions).

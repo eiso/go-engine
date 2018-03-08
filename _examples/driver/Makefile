@@ -49,7 +49,7 @@ docker: binaries
 
 driver: deps
 	CGO_ENABLED=1 go build -a -ldflags '-extldflags "-static"' -o $(BINARY_DRIVER) $(DRIVER_SOURCE_DIR)
-	docker build --no-cache -f docker/Dockerfile.driver -t eiso/driver .
+	docker build -f docker/Dockerfile.driver -t eiso/driver .
 	docker push eiso/driver
 
 driver-experimental: deps
