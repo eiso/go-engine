@@ -35,7 +35,7 @@ func (r *Repositories) Read() (*util.Row, error) {
 		return nil, err
 	}
 
-	// TODO: split remotes properly, for siva into seperate repos
+	// // TODO: split remotes properly, for siva into seperate repos
 	// listRemotes, err := repository.Remotes()
 	// if err != nil {
 	// 	return nil, errors.Wrap(err, "could not list remotes")
@@ -43,18 +43,28 @@ func (r *Repositories) Read() (*util.Row, error) {
 
 	// log.Printf("Log remotes: %v", listRemotes)
 	// for k, _ := range listRemotes {
-	// 	listRemotes[k].Config().Name
-	// 	listRemotes[k].Config().URLs
-	// 	listRemotes[k].Config().Fetch
+	// 	log.Printf("%v : %v : %v",
+	// 		listRemotes[k].Config().Name,
+	// 		listRemotes[k].Config().URLs,
+	// 		listRemotes[k].Config().Fetch)
 	// }
 
 	var headHash string
+	// Errors are not handles since some repositories can have an empty/unresolvable HEAD
 	head, err := repository.Head()
 	if err == nil {
-		headHash = head.Hash().String()
+		// if HEAD exists, returns the resolved hash
+		headRef, err := resolveRef(repository, head)
+		if err == nil {
+			headHash = headRef.String()
+		}
 	}
 
 	return util.NewRow(util.Now(), r.repositoryID, headHash), nil
+}
+
+func (r *Repositories) Close() error {
+	return nil
 }
 
 type reposIter struct {

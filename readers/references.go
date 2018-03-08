@@ -51,6 +51,7 @@ func (r *References) Read() (*util.Row, error) {
 		return nil, err
 	}
 
+	// If a reference can't be resolved, it is skipped
 	refCommitHash, err := resolveRef(r.repo, ref)
 	if err != nil {
 		return nil, err
@@ -84,6 +85,13 @@ func (r *References) GetIter() (storer.ReferenceIter, error) {
 	return refs, err
 }
 
+func (r *References) Close() error {
+	if r.refs != nil {
+		r.refs.Close()
+	}
+	return nil
+}
+
 type refIterator struct {
 	repo     *git.Repository
 	refNames []plumbing.ReferenceName
@@ -95,11 +103,13 @@ func (iter *refIterator) Next() (*plumbing.Reference, error) {
 		return nil, io.EOF
 	}
 	refName := iter.refNames[iter.pos]
+	iter.pos++
+
 	ref, err := iter.repo.Reference(refName, true)
 	if err != nil {
-		return nil, err
+		// If ReferenceName does not exist, skip it
+		return nil, ErrRef
 	}
-	iter.pos++
 	return ref, nil
 }
 
@@ -134,7 +144,16 @@ func (iter *refIterator) Close() {}
 // Get correct commit hash
 // there is Repository.ResolveRevision but it fails on some tags and performance is worst
 func resolveRef(repo *git.Repository, ref *plumbing.Reference) (plumbing.Hash, error) {
+	if ref.Type() == plumbing.InvalidReference {
+		return plumbing.NewHash(""), ErrRef
+	}
+
 	refCommitHash := ref.Hash()
+	refName := ref.Name()
+
+	if refCommitHash.IsZero() {
+		return plumbing.NewHash(""), ErrRef
+	}
 
 	// handle symbolic references like HEAD
 	if ref.Type() == plumbing.SymbolicReference {
@@ -145,14 +164,18 @@ func resolveRef(repo *git.Repository, ref *plumbing.Reference) (plumbing.Hash, e
 		refCommitHash = targetRef.Hash()
 	}
 
-	// avoids handling tags
-	_, err := repo.TagObject(refCommitHash)
-	if err != plumbing.ErrObjectNotFound {
+	if refName.IsTag() {
 		return plumbing.NewHash(""), ErrRef
-	}
-
-	if ref.Type() == plumbing.InvalidReference {
-		return plumbing.NewHash(""), ErrRef
+		// TODO commented out because of memory leak
+		// tag, err := repo.TagObject(refCommitHash)
+		// if err != nil {
+		// 	return plumbing.NewHash(""), ErrRef
+		// }
+		// commit, err := tag.Commit()
+		// if err != nil {
+		// 	return plumbing.NewHash(""), ErrRef
+		// }
+		// refCommitHash = commit.Hash
 	}
 
 	return refCommitHash, nil

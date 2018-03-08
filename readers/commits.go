@@ -4,10 +4,13 @@ import (
 	"io"
 
 	"github.com/chrislusf/gleam/util"
+	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	storer "gopkg.in/src-d/go-git.v4/plumbing/storer"
 )
+
+var ErrObj = errors.New("unable to find object")
 
 type Commits struct {
 	repositoryID string
@@ -80,6 +83,16 @@ func (r *Commits) GetIter() object.CommitIter {
 	}
 }
 
+func (r *Commits) Close() error {
+	if r.commitsIter != nil {
+		r.commitsIter.Close()
+	}
+	if r.refsIter != nil {
+		r.refsIter.Close()
+	}
+	return nil
+}
+
 type commitsIterator struct {
 	repo     *git.Repository
 	refsIter storer.ReferenceIter
@@ -96,7 +109,12 @@ func (iter *commitsIterator) Next() (*object.Commit, error) {
 		return nil, err
 	}
 
-	return iter.repo.CommitObject(refCommitHash)
+	commitObj, err := iter.repo.CommitObject(refCommitHash)
+	if err != nil {
+		return nil, ErrObj
+	}
+
+	return commitObj, nil
 }
 
 func (iter *commitsIterator) ForEach(cb func(*object.Commit) error) error {
