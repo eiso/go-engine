@@ -8,7 +8,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"sync"
 	"time"
 
@@ -211,7 +210,6 @@ func (exe *Executor) executeInstruction(ctx context.Context, wg *sync.WaitGroup,
 		// println("args:", i.GetScript().Args[len(i.GetScript().Args)-1])
 
 		if i.GetScript() != nil {
-			i.GetScript().GetArgs()[1] = filepath.Base(i.GetScript().GetArgs()[1])
 			for x := 0; x < 3; x++ {
 				command := exec.CommandContext(ctx,
 					i.GetScript().GetPath(), i.GetScript().GetArgs()...,

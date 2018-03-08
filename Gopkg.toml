@@ -42,8 +42,9 @@
   name = "github.com/eiso/go-billy-siva"
 
 [[constraint]]
+  branch = "optimize-1"
   name = "gopkg.in/src-d/go-git.v4"
-  version = "4.1.1"
+  source = "github.com/dennwc/go-git"
 
 [prune]
   go-tests = true
@@ -56,3 +57,4 @@
 [[constraint]]
   branch = "improvements"
   name = "github.com/chrislusf/gleam"
+  source = "github.com/eiso/gleam"

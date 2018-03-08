@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/chrislusf/gleam/gio"
+	"github.com/chrislusf/gleam/util"
 	"github.com/eiso/go-engine/readers"
 	"github.com/pkg/errors"
 
@@ -55,54 +56,72 @@ func newReadShard(row []interface{}) error {
 	if err := s.decode(gio.ToBytes(row[0])); err != nil {
 		return err
 	}
-	return s.ReadSplit()
+
+	err := s.ReadSplit()
+	if err != nil {
+		log.Printf("newReadShard error: %s", err)
+	}
+	return err
 }
 
 func (s *shardInfo) ReadSplit() error {
-	log.Printf("reading %s from repo: %s", s.DataType, s.RepoPath)
+	log.Printf("started reading %s from: %s", s.DataType, s.RepoPath)
 
 	var repo *git.Repository
 	var err error
 	if s.RepoType == "standard" {
 		repo, err = git.PlainOpen(s.RepoPath)
 		if err != nil {
-			return errors.Wrap(err, "could not open git repository")
+			err = errors.Wrap(err, "could not open git repository")
+			log.Printf("skipping repository: %s due to %s", s.RepoPath, err)
+			return nil
 		}
 	} else if s.RepoType == "siva" {
 		repo, err = readSiva(s.RepoPath)
 		if err != nil {
-			log.Printf("Could not open: %s - %s", s.RepoPath, err)
-			return errors.Wrap(err, "could not open siva repository")
+			err = errors.Wrap(err, "could not open siva git repository")
+			log.Printf("skipping repository: %s due to %s", s.RepoPath, err)
+			return nil
 		}
 	}
 
 	reader, err := s.NewReader(repo, s.RepoPath, false)
 	if err != nil {
-		log.Println("err", err)
 		return errors.Wrapf(err, "could not read repository %s", s.RepoPath)
 	}
+	defer reader.Close()
+
 	if s.HasHeader {
-		if _, err := reader.ReadHeader(); err != nil {
+		headers, err := reader.ReadHeader()
+		if err != nil {
 			return errors.Wrap(err, "could not read headers")
+		}
+
+		interfaces := make([]interface{}, len(headers))
+		for i, h := range headers {
+			interfaces[i] = h
+		}
+		row := util.NewRow(util.Now(), interfaces...)
+		if err := row.WriteTo(os.Stdout); err != nil {
+			return errors.Wrap(err, "could not write row to stdout")
 		}
 	}
 
 	for {
 		row, err := reader.Read()
 		if err == io.EOF {
+			log.Printf("finished reading %s: %s", s.DataType, s.RepoPath)
 			return nil
-		} else if err == readers.ErrRef {
+		} else if err == readers.ErrRef || err == readers.ErrObj {
 			continue
 		} else if err != nil {
 			return errors.Wrap(err, "could not get next file")
 		}
-
 		// Writing to stdout is how agents communicate.
 		if err := row.WriteTo(os.Stdout); err != nil {
 			return errors.Wrap(err, "could not write row to stdout")
 		}
 	}
-	return nil
 }
 
 func readSiva(origPath string) (*git.Repository, error) {
@@ -125,6 +144,5 @@ func readSiva(origPath string) (*git.Repository, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to open the git repository")
 	}
-
 	return repository, nil
 }

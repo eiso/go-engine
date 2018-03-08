@@ -13,13 +13,18 @@ spec:
           readOnly: true
       containers:
       - name: driver-container
-        image: eiso/driver
+        image: eiso/driver:latest
+        imagePullPolicy: Always  
+        resources:
+          requests:
+            memory: "2000Mi"
+            cpu: "3"
         args: 
         - "driver"
-        - "--query=test"
-        - "--path=/data/siva/latest/00"
+        - "--query=references"
+        - "--path=/data/siva/latest/"
         - "--onDocker"
-        - "--partitions=4"
+        - "--partitions=28"
         volumeMounts:
         - name: gleam-data
           mountPath: /data

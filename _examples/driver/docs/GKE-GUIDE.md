@@ -35,15 +35,21 @@ make docker
 
 ### Defining your Google Cloud Node Pool
 
-go-engine is CPU intensive but low memory consumption, therefore it is ~ 20% more affordable to use Google Cloud's [high-CPU instances](https://cloud.google.com/compute/docs/machine-types#highcpu).
+go-engine is CPU intensive but low memory consumption, therefore it is ~20% more affordable to use Google Cloud's [high-CPU instances](https://cloud.google.com/compute/docs/machine-types#highcpu).
 
 ```
-gcloud container node-pools create go-engine-node-pool --cluster=gleam --disk-size=50 --image-type=cos --machine-type=n1-highcpu-2 --num-nodes=5
+gcloud container node-pools create go-engine-node-pool --cluster=gleam --disk-size=50 --image-type=cos --machine-type=n1-highcpu-4 --num-nodes=5
 ```
-In case you need to delete it:
+
+If you want to change an already running cluster but don't mind deleting your running deployment:
 
 ```
-#gcloud container node-pools delete go-engine-node-pool --cluster=gleam
+kubectl delete deployment master
+kubectl delete deployment agent
+# be sure to delete any remaining jobs
+# kubectl delete job NAME
+gcloud container node-pools delete go-engine-node-pool --cluster=gleam
+# RUN ABOVE 'gcloud container node-pools create...' COMMAND
 ```
 
 ### Setting up your k8s cluster
@@ -76,6 +82,14 @@ kubectl config view | grep namespace:
 ```
 
 In case you see an error: `namespaces "gleam" not found`. Run the above command again, sometimes GCP takes a bit of time to propogate the namespaces.
+
+#### Resizing your cluster
+
+In case you need to resize you cluster:
+
+```
+gcloud container clusters resize gleam --node-pool go-engine-node-pool --size 6
+```
 
 ### Load the Public Git Archive dataset with pga
 
@@ -225,4 +239,43 @@ kubectl get pods
 kubectl exec -it agent-786073843-zxjxj -- /bin/sh
 ```
 
+#### Detaching a disk
+
+```
 gcloud compute instances detach-disk gke-gleam-default-pool-d58b1f3f-zgw3 --disk gleam-pv-disk
+```
+
+#### Debugging empty downloads
+
+Find all files of size 0
+
+```
+find /data/siva/latest/ -type f -size 0c -exec ls {} \;
+```
+
+Find all files of size >0
+
+```
+find /data/siva/latest/ea/ -type f -size +0c -exec ls {} \;
+```
+
+#### See logs of previous pod after a restart
+
+```
+kubectl logs -p  
+```
+
+#### Expose 8080 to run pprof on the driver
+
+```
+kubectl expose deployment agent --type=LoadBalancer --name=pprof
+kubectl describe services pprof
+kubectl get services pprof
+```
+
+To see memory usage:
+
+```
+go tool pprof http://EXTERNAL-IP:8080/debug/pprof/heap
+top
+```

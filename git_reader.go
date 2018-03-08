@@ -15,19 +15,25 @@ func Repositories(path string, partitionCount int) *sourceRepositories {
 type reader interface {
 	Read() (*util.Row, error)
 	ReadHeader() ([]string, error)
+	Close() error
 }
 
 func (ds *shardInfo) NewReader(r *git.Repository, path string, flag bool) (reader, error) {
+	// .Repositories()
 	if ds.DataType == "repositories" {
 		repoReader, err := readers.NewRepositories(r, path)
 		if err != nil {
+			repoReader.Close()
 			return nil, err
 		}
+		repoReader.Close()
 		return repoReader, nil
 	}
 
+	// .References()
 	refsReader, err := readers.NewReferences(r, path, ds.FilterRefs)
 	if err != nil {
+		refsReader.Close()
 		return nil, err
 	}
 
@@ -35,13 +41,18 @@ func (ds *shardInfo) NewReader(r *git.Repository, path string, flag bool) (reade
 		return refsReader, nil
 	}
 
-	refs, err := refsReader.GetIter()
+	// .Commits()
+	refsIter, err := refsReader.GetIter()
 	if err != nil {
+		refsIter.Close()
 		return nil, err
 	}
 
-	commitsReader, err := readers.NewCommits(r, path, refs, ds.AllCommits)
+	commitsReader, err := readers.NewCommits(r, path, refsIter, ds.AllCommits)
 	if err != nil {
+		refsReader.Close()
+		refsIter.Close()
+		commitsReader.Close()
 		return nil, err
 	}
 
@@ -54,16 +65,12 @@ func (ds *shardInfo) NewReader(r *git.Repository, path string, flag bool) (reade
 		if err != nil {
 			return nil, err
 		}
-
 		return treesReader, nil
-	}
-
-	if ds.DataType == "blobs" {
+	} else if ds.DataType == "blobs" {
 		blobsReader, err := readers.NewBlobs(r, path, commitsReader.GetIter())
 		if err != nil {
 			return nil, err
 		}
-
 		return blobsReader, nil
 	}
 

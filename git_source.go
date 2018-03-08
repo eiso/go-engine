@@ -21,7 +21,7 @@ type baseSource struct {
 	fileBaseName string
 	hasWildcard  bool
 	path         string
-	hasHeader    bool
+	showHeader   bool
 	prefix       string
 
 	// FIXME most probably it shouldn't be here
@@ -55,7 +55,6 @@ func newGitRepositories(fsPath string, partitionCount int) *sourceRepositories {
 	return &sourceRepositories{
 		baseSource: baseSource{
 			partitionCount: partitionCount,
-			hasHeader:      true,
 			folder:         filepath.Dir(fsPath),
 			fileBaseName:   base,
 			path:           fsPath,
@@ -67,27 +66,35 @@ func newGitRepositories(fsPath string, partitionCount int) *sourceRepositories {
 
 // Find all standard & siva repositories in the directory
 func (s *baseSource) gitRepos(path string, out io.Writer, stats *pb.InstructionStat) error {
-	virtualFiles, err := filesystem.List(path)
-	if err != nil {
-		return fmt.Errorf("Failed to list files in %s: %v", path, err)
+
+	var virtualFiles []*filesystem.FileLocation
+	var err error
+
+	if !filesystem.IsDir(path) && s.isSivaFile(path) {
+		virtualFiles = append(virtualFiles, &filesystem.FileLocation{path})
+	} else {
+		virtualFiles, err = filesystem.List(path)
+		if err != nil {
+			return fmt.Errorf("Failed to list files in %s: %v", path, err)
+		}
 	}
 
 	for _, vf := range virtualFiles {
-		if !filesystem.IsDir(vf.Location) && !s.isSivaFile(vf.Location) {
+		repoType := "standard"
+		if s.isSivaFile(vf.Location) {
+			repoType = "siva"
+		}
+
+		if !filesystem.IsDir(vf.Location) && repoType != "siva" {
 			continue
 		}
 
-		if !s.isStandardRepository(vf.Location) && !s.isSivaFile(vf.Location) {
-			err = s.gitRepos(vf.Location, out, stats)
+		if !s.isStandardRepository(vf.Location) && repoType != "siva" {
+			err := s.gitRepos(vf.Location, out, stats)
 			if err != nil {
 				return err
 			}
 			continue
-		}
-
-		repoType := "standard"
-		if s.isSivaFile(vf.Location) {
-			repoType = "siva"
 		}
 
 		stats.OutputCounter++
@@ -95,7 +102,7 @@ func (s *baseSource) gitRepos(path string, out io.Writer, stats *pb.InstructionS
 			RepoPath:   vf.Location,
 			RepoType:   repoType,
 			DataType:   s.prefix,
-			HasHeader:  s.hasHeader,
+			HasHeader:  s.showHeader,
 			FilterRefs: s.FilterRefs,
 			AllCommits: s.allCommits,
 		}
@@ -115,7 +122,8 @@ func (s *baseSource) gitRepos(path string, out io.Writer, stats *pb.InstructionS
 
 func (s *baseSource) isStandardRepository(path string) bool {
 	p := filepath.Join(path, ".git")
-	_, err := filesystem.Open(p)
+	ps, err := filesystem.Open(p)
+	defer ps.Close()
 	if err != nil {
 		return false
 	}
@@ -127,6 +135,20 @@ func (s *baseSource) isSivaFile(path string) bool {
 	if ext != ".siva" {
 		return false
 	}
+	ps, err := filesystem.Open(path)
+	defer ps.Close()
+	if err != nil {
+		return false
+	}
+	if ps.Size() == 0 {
+		return false
+	}
+
+	// open the siva file to see if it is a valid git repository
+	// if _, err := readSiva(path); err != nil {
+	// 	return false
+	// }
+
 	return true
 }
 
@@ -159,7 +181,7 @@ func (s *baseSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 			RepoPath:   s.path,
 			RepoType:   repoType,
 			DataType:   s.prefix,
-			HasHeader:  s.hasHeader,
+			HasHeader:  s.showHeader,
 			FilterRefs: s.FilterRefs,
 			AllCommits: s.allCommits,
 		}
@@ -170,6 +192,11 @@ func (s *baseSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 		}
 		return util.NewRow(util.Now(), b).WriteTo(out)
 	})
+}
+
+func (s *sourceRepositories) WithHeaders() *sourceRepositories {
+	s.showHeader = true
+	return s
 }
 
 func (s *sourceRepositories) References() *sourceReferences {
@@ -202,6 +229,11 @@ func (s *sourceReferences) AllReferenceCommits() *sourceCommits {
 	}
 }
 
+func (s *sourceReferences) WithHeaders() *sourceReferences {
+	s.showHeader = true
+	return s
+}
+
 func (s *sourceCommits) Trees() *sourceTrees {
 	newSource := s.baseSource
 	newSource.prefix = "trees"
@@ -210,10 +242,25 @@ func (s *sourceCommits) Trees() *sourceTrees {
 	}
 }
 
+func (s *sourceCommits) WithHeaders() *sourceCommits {
+	s.showHeader = true
+	return s
+}
+
 func (s *sourceTrees) Blobs() *sourceBlobs {
 	newSource := s.baseSource
 	newSource.prefix = "blobs"
 	return &sourceBlobs{
 		baseSource: newSource,
 	}
+}
+
+func (s *sourceTrees) WithHeaders() *sourceTrees {
+	s.showHeader = true
+	return s
+}
+
+func (s *sourceBlobs) WithHeaders() *sourceBlobs {
+	s.showHeader = true
+	return s
 }

@@ -22,21 +22,25 @@ spec:
     spec:
       containers:
       - name: agent
-        image: eiso/gleam
+        image: eiso/gleam:latest
+        imagePullPolicy: Always
         resources:
-          limits:
-            memory: "500Mi"
-            cpu: "1.3"
+          requests:
+            memory: "1900Mi"
+            cpu: "3"
         args:
           - "agent"
-          - "--memory=500" 
+          - "--memory=1200" 
           - "--master=master:45326"
-          - "--executor.max=2"
+          - "--executor.max=6"
           - "--dataCenter=GCP"
           - "--rack=go-engine-node-pool"
         volumeMounts:
         - name: gleam-data
           mountPath: /data
+        ports:
+        - containerPort: 8080
+          protocol: TCP  
       volumes:
         - name: gleam-data
           persistentVolumeClaim:

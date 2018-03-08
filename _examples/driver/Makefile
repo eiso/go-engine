@@ -10,9 +10,6 @@ BINARY_PGA = pga
 
 .PHONY : clean deps binaries docker run_docker
 
-override: 
-	git config --local url.https://github.com/eiso/gleam.insteadOf https://github.com/chrislusf/gleam
-	
 clean:
 	go clean $(SOURCE_DIR)
 	go clean $(DRIVER_SOURCE_DIR)
@@ -21,7 +18,7 @@ clean:
 	rm -f $(BINARY_DRIVER)-darwin
 	rm -f $(BINARY_PGA)
 
-deps: override
+deps: 
 	go get $(GO_FLAGS) -d $(SOURCE_DIR)
 	go get $(GO_FLAGS) -d $(DRIVER_SOURCE_DIR)
 	go get $(GO_FLAGS) -d $(PGA_SOURCE_DIR)
@@ -34,15 +31,20 @@ binaries: deps
 	CGO_ENABLED=0 go build -tags norwfs -a -ldflags '-extldflags "-static"' -o $(BINARY_DRIVER) $(DRIVER_SOURCE_DIR)
 	CGO_ENABLED=1 go build -a -ldflags '-extldflags "-static"' -o $(BINARY_PGA) $(PGA_SOURCE_DIR)
 
+install: binaries
+	cp $(BINARY) $(GOPATH)/bin/
+	cp $(BINARY_DRIVER) $(GOPATH)/bin/
+	cp $(BINARY_PGA) $(GOPATH)/bin/
+
 binaries-darwin: deps
 	GOOS=darwin CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o $(BINARY_DRIVER)-darwin $(DRIVER_SOURCE_DIR)
 
 docker: binaries
-	docker build -f docker/Dockerfile.driver -t eiso/driver .
+	docker build --no-cache -f docker/Dockerfile.driver -t eiso/driver .
 	docker push eiso/driver
-	docker build -f docker/Dockerfile.gleam -t eiso/gleam .
+	docker build --no-cache -f docker/Dockerfile.gleam -t eiso/gleam .
 	docker push eiso/gleam
-	docker build -f docker/Dockerfile.pga -t eiso/pga .
+	docker build --no-cache -f docker/Dockerfile.pga -t eiso/pga .
 	docker push eiso/pga
 
 driver: deps
@@ -52,7 +54,7 @@ driver: deps
 
 driver-experimental: deps
 	CGO_ENABLED=1 go build -race -a -ldflags '-extldflags "-static"' -o $(BINARY_DRIVER) $(DRIVER_SOURCE_DIR)
-	docker build -f docker/Dockerfile.driver-experimental -t eiso/driver-experimental .
+	docker build  --no-cache -f docker/Dockerfile.driver-experimental -t eiso/driver-experimental .
 	docker push eiso/driver-experimental
 
 run_docker: docker
