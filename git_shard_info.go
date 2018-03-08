@@ -20,7 +20,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/storage/filesystem"
 )
 
-var regMapperReadShard = gio.RegisterMapper(newReadShard)
+var regMapperReadShard = gio.RegisterMapper(newReadShard())
 
 func init() {
 	gob.Register(shardInfo{})
@@ -51,17 +51,26 @@ func (s *shardInfo) encode() ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func newReadShard(row []interface{}) error {
-	var s shardInfo
-	if err := s.decode(gio.ToBytes(row[0])); err != nil {
+func newReadShard() gio.Mapper {
+	var headerHasBeenRead = false
+	return func(row []interface{}) error {
+		var s shardInfo
+		if err := s.decode(gio.ToBytes(row[0])); err != nil {
+			return err
+		}
+		if headerHasBeenRead {
+			s.HasHeader = false
+		}
+		if s.HasHeader {
+			headerHasBeenRead = true
+		}
+
+		err := s.ReadSplit()
+		if err != nil {
+			log.Printf("newReadShard error: %s", err)
+		}
 		return err
 	}
-
-	err := s.ReadSplit()
-	if err != nil {
-		log.Printf("newReadShard error: %s", err)
-	}
-	return err
 }
 
 func (s *shardInfo) ReadSplit() error {
