@@ -102,20 +102,21 @@ func queryExample(path, query string, partitions int) (*flow.Dataset, []flow.Flo
 	var p *flow.Dataset
 
 	switch query {
-	case "most-used-languages":
+	case "mostUsedLanguages":
 		numberOfLangs := 10
 		fmt.Printf(">>> %d most used languages:\n", numberOfLangs)
     
-    	p = f.Read(engine.Repositories(path, partitions).
+    		p = f.Read(engine.Repositories(path, partitions).
 			References().
 			Commits().
 			Trees().	
-       Blobs().
+      			Blobs().
 			WithHeaders()).
 			Map("classify languages", getLanguagesFromBlobs).
 			GroupBy("group by lang", flow.Field(1)).
 			Map("group count", countGroups).
 			Top("top", numberOfLangs, flow.OrderBy(2, false))
+		
 	case "repositories":
 		p = f.Read(engine.Repositories(path, partitions))
 	case "references":
