@@ -103,11 +103,13 @@ func (iter *refIterator) Next() (*plumbing.Reference, error) {
 		return nil, io.EOF
 	}
 	refName := iter.refNames[iter.pos]
+	iter.pos++
+
 	ref, err := iter.repo.Reference(refName, true)
 	if err != nil {
-		return nil, err
+		// If ReferenceName does not exist, skip it
+		return nil, ErrRef
 	}
-	iter.pos++
 	return ref, nil
 }
 

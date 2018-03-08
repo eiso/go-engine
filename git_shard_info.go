@@ -71,12 +71,16 @@ func (s *shardInfo) ReadSplit() error {
 	if s.RepoType == "standard" {
 		repo, err = git.PlainOpen(s.RepoPath)
 		if err != nil {
-			return errors.Wrap(err, "could not open git repository")
+			err = errors.Wrap(err, "could not open git repository")
+			log.Printf("skipping repository: %s due to %s", s.RepoPath, err)
+			return nil
 		}
 	} else if s.RepoType == "siva" {
 		repo, err = readSiva(s.RepoPath)
 		if err != nil {
-			return errors.Wrap(err, "could not open siva repository")
+			err = errors.Wrap(err, "could not open siva git repository")
+			log.Printf("skipping repository: %s due to %s", s.RepoPath, err)
+			return nil
 		}
 	}
 
